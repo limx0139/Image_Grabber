@@ -1,7 +1,13 @@
 
+import time
+
 import clr
 import os
 import sys
+import threading
+
+import cv2
+import numpy as np
 
 a=r"C:\Users\kpb26117\OneDrive - University of Strathclyde\Documents\Coding\LAND\Image_Grabber\LandImagerSDK.dll"
 
@@ -40,10 +46,10 @@ class ConnectLANDDialogue:
             print("Error: Invalid argument")
         
         connectDevice = self._discoveredDevices[choice].getConnectionInfo()
-        print(connectDevice.IPAddress)
-        return
+        # There is an additional check in the example that the ip addresses are valid. This is skipped here
+        if connectDevice is not None:
+            self._connectedDevice = li.Discovery.DirectConnect(connectDevice)
                 
-    
     class ConnectionItem:
         def __init__(self, connectionInfo):
             self._connectionInfo = connectionInfo
@@ -55,12 +61,95 @@ class ConnectLANDDialogue:
         def toString(self):
             self._connectionInfo.IPAddress.ToString()
  
-            
+class FrameGrabber:
+    def __init__(self, DeviceAPI):
+        # DeviceAPI for selected device
+        self._connectedDevice = DeviceAPI
+        self._currentFrame = None
+        # Thread to run the frame grabbing and image processing
+        self._frame_event_lock    = threading.Lock()
+        self._frame_event         = None
+        self._frame_event_updated = False
+        # Writable Bitmap format the original uses
+        self._bmp = None
+        
+    def connect(self):
+        if self._connectedDevice is not None:
+            self._connectedDevice.ThermalFrameAvailable += self.onFrame
+    def startStreaming(self):
+        if self._connectedDevice is not None:
+            print("Start Streaming")
+            self._connectedDevice.StartStreaming()
+    def stopStreaming(self):
+        if self._connectedDevice is not None:
+            self._connectedDevice.StopStreaming()
+    def disconnect(self):
+        if self._connectedDevice is not None:
+            self._connectedDevice.ThermalFrameAvailable -= self.onFrame
+            self._connectedDevice.Disconnect()
+    def onFrame(self, source, args):
+        
+        with self._frame_event_lock:
+            # Store a copy of the event to be processed in the main thread. The provided event object is reused
+            # by the SDK once the callback returns.
+            print("onFrame using lock!")
+            self._frame_event         = args.ThermalFrame.Clone()
+            self._frame_event_updated = True
+    
+    # Main Thread set up to receive frames
+    def runMain(self):
+        self.connect()
+        self.startStreaming()
+        # # Create and start the image grabbing/processing thread
+        # self._thread = threading.Thread(target=self.runListener)
+        # self._thread.start()
+        
+        frame_event = None
+        
+        while(True):
+            # Get the latest thermal frame if there is one
+            try:
+                with self._frame_event_lock:
+                    if not self._frame_event_updated or self._frame_event is None:
+                        continue
+
+                    frame_event = self._frame_event
+                    self._frame_event_updated = False
+                    print("Frame received on Main")
+                #B8G8R8A8
+                currentFrame = self._frame_event.GetTemperatureBitmap(); 
+                python_bytes = bytes(currentFrame.PixelData)
+                numpy_bytes = np.frombuffer(python_bytes, dtype=np.uint8)
+                newarr = numpy_bytes.reshape(frame_event.FrameHeight, frame_event.FrameWidth, 4)
+                cv2.imshow('Grabbed', newarr)
+        
+                # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    break
+
+        # Clean up
+        
+            except KeyboardInterrupt:
+                break
+        # Stop the processing and join the thread
+        # self._thread.join()
+        cv2.destroyAllWindows()
+        self.stopStreaming()
+        self.disconnect()
+        
+    # Event Listener for ThermalFrameAvailable
+    def runListener(self):
+        return
+        
+        
+    
 
 def main():
     """
     Main entry point.
     """
+    # Connect to device
     connection = ConnectLANDDialogue()
     print(connection._discoveredDevices)
     connection.discoverDevices()
@@ -69,6 +158,16 @@ def main():
         print("No devices found")
         return
     connection.connectDevice()
+    if connection._connectedDevice is not None:
+        print("Connection Success")
+        
+    # Grab Frames
+    
+    frameGrabber = FrameGrabber(connection._connectedDevice)
+    
+    frameGrabber.runMain()
+
+    
     
     return
     
