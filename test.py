@@ -11,12 +11,10 @@ clr.AddReference("System")
 import LandImagerSDK as li
 import System
 
-print(li.Discovery.DiscoverDevices())
-
 class ConnectLANDDialogue:
      
     def __init__(self):
-        # Dummy initial connection
+        # Stores the ConnectionInfo of the connected device
         self._connectDevice = li.Model.ConnectionInfo(System.Net.IPAddress.Parse("127.0.0.1"), System.Net.IPAddress.Parse("255.255.0.0"), 1040, li.Enums.IPMode.Static, "12345", li.Enums.ImagerModel.ARC)
         # List of Devices found
         self._discoveredDevices = []
@@ -32,6 +30,17 @@ class ConnectLANDDialogue:
             self._discoveredDevices.append(self.ConnectionItem(device.ConnectionInfo))
     
     def connectDevice(self):
+        choice = 0
+        
+        if len(sys.argv) == 1:
+            choice = 0
+        elif isinstance(sys.argv[1], int) and self._discoveredDevices.count >= sys.argv[1]:
+            choice = sys.argv[1]-1
+        else:
+            print("Error: Invalid argument")
+        
+        connectDevice = self._discoveredDevices[choice].getConnectionInfo()
+        print(connectDevice.IPAddress)
         return
                 
     
@@ -56,6 +65,10 @@ def main():
     print(connection._discoveredDevices)
     connection.discoverDevices()
     print(connection._discoveredDevices)
+    if len(connection._discoveredDevices) == 0:
+        print("No devices found")
+        return
+    connection.connectDevice()
     
     return
     
