@@ -1,27 +1,25 @@
-
-import time
-
 import clr
 import os
 import sys
 import threading
-
 import cv2
 import numpy as np
-
-a=r"C:\Users\kpb26117\OneDrive - University of Strathclyde\Documents\Coding\LAND\Image_Grabber\LandImagerSDK.dll"
-
-clr.AddReference(a)
+import os
+# Finds the directory of the LandImagerSDK.dll, which should be in the same directory as the script
+cwd = os.getcwd()
+assemblyLocation = cwd+"\\LandImagerSDK.dll"
+print(assemblyLocation)
+clr.AddReference(assemblyLocation)
 clr.AddReference("System")
 
 import LandImagerSDK as li
-import System
+import System.Net.IPAddress as IPAddress
 
 class ConnectLANDDialogue:
      
     def __init__(self):
         # Stores the ConnectionInfo of the connected device
-        self._connectDevice = li.Model.ConnectionInfo(System.Net.IPAddress.Parse("127.0.0.1"), System.Net.IPAddress.Parse("255.255.0.0"), 1040, li.Enums.IPMode.Static, "12345", li.Enums.ImagerModel.ARC)
+        self._connectDevice = li.Model.ConnectionInfo(IPAddress.Parse("127.0.0.1"), IPAddress.Parse("255.255.0.0"), 1040, li.Enums.IPMode.Static, "12345", li.Enums.ImagerModel.ARC)
         # List of Devices found
         self._discoveredDevices = []
         # DeviceAPI for selected device
@@ -46,7 +44,7 @@ class ConnectLANDDialogue:
             print("Error: Invalid argument")
         
         connectDevice = self._discoveredDevices[choice].getConnectionInfo()
-        # There is an additional check in the example that the ip addresses are valid. This is skipped here
+        # There is an additional check in the example code that the ip addresses are valid. This is skipped here as the ip address is not user input.
         if connectDevice is not None:
             self._connectedDevice = li.Discovery.DirectConnect(connectDevice)
                 
@@ -66,7 +64,7 @@ class FrameGrabber:
         # DeviceAPI for selected device
         self._connectedDevice = DeviceAPI
         self._currentFrame = None
-        # Thread to run the frame grabbing and image processing
+        # Threading lock to sync the frame grabbing and image processing threads
         self._frame_event_lock    = threading.Lock()
         self._frame_event         = None
         self._frame_event_updated = False
@@ -117,7 +115,7 @@ class FrameGrabber:
                     self._frame_event_updated = False
                     print("Frame received on Main")
                 #B8G8R8A8
-                currentFrame = self._frame_event.GetTemperatureBitmap(); 
+                currentFrame = self._frame_event.GetTemperatureBitmap()
                 python_bytes = bytes(currentFrame.PixelData)
                 numpy_bytes = np.frombuffer(python_bytes, dtype=np.uint8)
                 newarr = numpy_bytes.reshape(frame_event.FrameHeight, frame_event.FrameWidth, 4)
@@ -128,22 +126,14 @@ class FrameGrabber:
                 if key == ord('q'):
                     break
 
-        # Clean up
+        
         
             except KeyboardInterrupt:
                 break
-        # Stop the processing and join the thread
-        # self._thread.join()
+        # Clean up
         cv2.destroyAllWindows()
         self.stopStreaming()
         self.disconnect()
-        
-    # Event Listener for ThermalFrameAvailable
-    def runListener(self):
-        return
-        
-        
-    
 
 def main():
     """
@@ -162,13 +152,8 @@ def main():
         print("Connection Success")
         
     # Grab Frames
-    
     frameGrabber = FrameGrabber(connection._connectedDevice)
-    
     frameGrabber.runMain()
-
-    
-    
     return
     
     
