@@ -83,6 +83,13 @@ class Device:
         # Connect up onFrame to fire whenever the API indicates a frame is available
         if self._connectedDevice is not None:
             self._connectedDevice.ThermalFrameAvailable += self.onFrame
+    
+    def __del__(self):
+        """
+        Destructor.
+        """
+        # Ensure the client removes itself before destruction to avoid memory access issues
+        self._connectedDevice.Disconnect()
         
     def setColorPalette(self, choice):
         temp = None
@@ -121,34 +128,7 @@ class Device:
             self._frame_event = args.ThermalFrame.Clone()
             self._frame_availale.set()
     
-    # Main Thread set up to receive frames
-    def processFrame(self):
-        # This starts a background thread to send the ThermalFrames from the camera
-        self.startStreaming()        
-        while(True):
-            # Get the latest thermal frame if there is one
-            try:
-                self._frame_availale.wait()
-                with self._frame_event_lock:
-                    if self._frame_event is None:
-                        continue
-                    # Copy the thermal frame and release the resource so background thread is freed
-                    frame = ThermalFrame(self._frame_event)
-                cv2.imshow('Frames', frame._image)
-                # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
-                    break
-                # Indicate that the frame has been processed and we can wait for the next frame.
-                self._frame_availale.clear()
-            except KeyboardInterrupt:
-                break
-        # Clean up
-        cv2.destroyAllWindows()
-        # This ends the background thread
-        self.stopStreaming()
-        # Disconnect the camera
-        self.disconnect()
+
 
 # Exported (and adapted to python) ThermalFrame. 
 class ThermalFrame:
@@ -181,7 +161,7 @@ def connect(IPAddress):
         print("Connection Success")
     else:
         print("Connection Failed")
-    return connection
+    return connection._connectedDevice
 
 # Connects to the camera and directly streams it using cv2
 # Choose from 5 colour palettes
@@ -190,15 +170,42 @@ def streamFrame(IPAddress, palette):
     Main entry point.
     """
     # Connect to device
-    connection = connect(IPAddress)
+    connectedDevice = connect(IPAddress)
 
     # Grab Frames
-    frameGrabber = Device(connection._connectedDevice)
+    frameGrabber = Device(connectedDevice)
     frameGrabber.setColorPalette(palette)
-    frameGrabber.processFrame()
+    showFrames(frameGrabber)
     return
     
-    
+# Main Thread set up to receive frames
+def showFrames(Device):
+    # This starts a background thread to send the ThermalFrames from the camera
+    Device.startStreaming()        
+    while(True):
+        # Get the latest thermal frame if there is one
+        try:
+            Device._frame_availale.wait()
+            with Device._frame_event_lock:
+                if Device._frame_event is None:
+                    continue
+                # Copy the thermal frame and release the resource so background thread is freed
+                frame = ThermalFrame(Device._frame_event)
+            cv2.imshow('Frames', frame._image)
+            # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
+                break
+            # Indicate that the frame has been processed and we can wait for the next frame.
+            Device._frame_availale.clear()
+        except KeyboardInterrupt:
+            break
+    # Clean up
+    cv2.destroyAllWindows()
+    # This ends the background thread
+    Device.stopStreaming()
+    # Disconnect the camera
+    Device.disconnect()
 
 if __name__ == "__main__":
     streamFrame("10.1.10.102", Palette.Palette1)

@@ -2,7 +2,7 @@
 
 import cv2
 import numpy as np
-import Landframegrabber as lfg
+import ametekframegrabber as fg
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -31,9 +31,9 @@ def drawMeasurement(image, position, value, color, bg_color):
       cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
 
 # Connects to device with IPAddress 10.1.10.102
-connection = lfg.connect("10.1.10.102")
+connectedDevice = fg.connect("10.1.10.102")
 # Instantiates the Device API for that device
-Device = lfg.Device(connection._connectedDevice)
+Device = fg.Device(connectedDevice)
 # Starts a background thread streaming the camera
 Device.startStreaming()
 
@@ -46,7 +46,7 @@ while(True):
         with Device._frame_event_lock:
             if Device._frame_event is None:
                 continue
-            frame = lfg.ThermalFrame(Device._frame_event)
+            frame = fg.ThermalFrame(Device._frame_event)
         image = np.copy(frame._image)
         
         # Here is where you have access to the thermal frame!
