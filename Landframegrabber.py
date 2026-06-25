@@ -8,14 +8,11 @@ from enum import Enum
 # Finds the directory of the LandImagerSDK.dll, which should be in the same directory as the script
 cwd = os.getcwd()
 assemblyLocation = cwd+"\\LandImagerSDK.dll"
-print(assemblyLocation)
 clr.AddReference(assemblyLocation)
-clr.AddReference("System")
 
 # python.net Imports from clr
 # Python.net is a dependency!
 import LandImagerSDK as li
-import System
 
 
 #ENUMS
@@ -25,11 +22,6 @@ class Palette(Enum):
     Palette3 = 3
     Palette4 = 4
     Palette5 = 5
-    
-class Process(Enum):
-    Show = 1
-    GetData = 2
-
     
 # Class that handles connection to the Ametek Camera
 class ConnectLANDDialogue:
@@ -52,13 +44,12 @@ class ConnectLANDDialogue:
     def connectDevice(self, arg):
         if not isinstance(arg, str):
             print("Error: Invalid argument")
-        
+            return
         # search for device with matching IPAddress
         # Assume no two devices have the same IPAddress
         connection = None
         
         for device in self._discoveredDevices:
-            print(device.toString())
             if device.toString() == arg:
                 connection = device.getConnectionInfo()
         if connection is not None:
@@ -77,7 +68,9 @@ class ConnectLANDDialogue:
         def toString(self):
             return self._connectionInfo.IPAddress.ToString()
  
-class FrameGrabber:
+ 
+# Exported (and adapted to python) DeviceAPI. 
+class Device:
     def __init__(self, DeviceAPI):
         # DeviceAPI for selected device
         self._connectedDevice = DeviceAPI
@@ -86,7 +79,10 @@ class FrameGrabber:
         self._frame_event_lock    = threading.Lock()
         # Variable to store the ThermalFrame for processings
         self._frame_event         = None
-        self._frame_event_updated = False
+        self._frame_availale = threading.Event()
+        # Connect up onFrame to fire whenever the API indicates a frame is available
+        if self._connectedDevice is not None:
+            self._connectedDevice.ThermalFrameAvailable += self.onFrame
         
     def setColorPalette(self, choice):
         temp = None
@@ -107,12 +103,8 @@ class FrameGrabber:
         self._connectedDevice.ColorPalette.SelectedPalette = temp
         # return self._connectedDevice.ColorPalette.Palette
 
-    def connect(self):
-        if self._connectedDevice is not None:
-            self._connectedDevice.ThermalFrameAvailable += self.onFrame
     def startStreaming(self):
         if self._connectedDevice is not None:
-            print("Start Streaming")
             self._connectedDevice.StartStreaming()
     def stopStreaming(self):
         if self._connectedDevice is not None:
@@ -126,78 +118,87 @@ class FrameGrabber:
         with self._frame_event_lock:
             # Store a copy of the event to be processed in the main thread. The provided event object is reused
             # by the SDK once the callback returns.
-            self._frame_event         = args.ThermalFrame.Clone()
-            self._frame_event_updated = True
+            self._frame_event = args.ThermalFrame.Clone()
+            self._frame_availale.set()
     
-    # Main Thread set up to receive frames, arg process takes in an integer to choose how frame is processed
-    def processFrame(self, process):
-        self.connect()
+    # Main Thread set up to receive frames
+    def processFrame(self):
         # This starts a background thread to send the ThermalFrames from the camera
-        self.startStreaming()
-        frame_event = None
-        
+        self.startStreaming()        
         while(True):
             # Get the latest thermal frame if there is one
             try:
+                self._frame_availale.wait()
                 with self._frame_event_lock:
-                    if not self._frame_event_updated or self._frame_event is None:
+                    if self._frame_event is None:
                         continue
-
-                    frame_event = self._frame_event
-                    self._frame_event_updated = False
-                match process:
-                    case Process.Show:
-                        # B8G8R8A8 Format
-                        # Converts the C# bytes to a numpy array
-                        currentFrame = self._frame_event.GetTemperatureBitmap()
-                        python_bytes = bytes(currentFrame.PixelData)
-                        numpy_bytes = np.frombuffer(python_bytes, dtype=np.uint8)
-                        newarr = numpy_bytes.reshape(frame_event.FrameHeight, frame_event.FrameWidth, 4)
-                        cv2.imshow('Grabbed', newarr)
-                        # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
-                        key = cv2.waitKey(1) & 0xFF
-                        if key == ord('q'):
-                            break
-                    case Process.GetData:
-                        continue
-
-        
-        
+                    # Copy the thermal frame and release the resource so background thread is freed
+                    frame = ThermalFrame(self._frame_event)
+                cv2.imshow('Frames', frame._image)
+                # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    break
+                # Indicate that the frame has been processed and we can wait for the next frame.
+                self._frame_availale.clear()
             except KeyboardInterrupt:
                 break
         # Clean up
         cv2.destroyAllWindows()
         # This ends the background thread
         self.stopStreaming()
+        # Disconnect the camera
         self.disconnect()
 
-# Arguments: 
-    # IPAddress : String
-    # Palette : Enum
-    # Process :Enum
-def grabFrame(IPAddress, palette, process):
-    """
-    Main entry point.
-    """
-    # Connect to device
+# Exported (and adapted to python) ThermalFrame. 
+class ThermalFrame:
+    def __init__(self, ThermalFrame):
+        self._frame = ThermalFrame
+        self._backgroundTemp = ThermalFrame.BackgroundTemp
+        self._emissivity = ThermalFrame.Emissivity
+        self._height = ThermalFrame.FrameHeight
+        self._width = ThermalFrame.FrameWidth
+        self._minTemp = ThermalFrame.MinTemp
+        self._minIndex = divmod(ThermalFrame.MinIndex, self._width)[::-1]
+        self._maxTemp = ThermalFrame.MaxTemp
+        self._maxIndex = divmod(ThermalFrame.MaxIndex, self._width)[::-1]
+        self._tempData = np.frombuffer(ThermalFrame.TemperatureData, dtype=np.float32).reshape(self._height, self._width, 1)
+        self._image = np.frombuffer(bytes(ThermalFrame.GetTemperatureBitmap().PixelData), dtype=np.uint8).reshape(self._height, self._width, 4)
+    def clone(self):
+        return ThermalFrame(self)
+# Functions Exported
+    
+# Connects to a camera given a string input of its IPAddress.
+# IPAddress is generally 10.1.10.102
+def connect(IPAddress):
     connection = ConnectLANDDialogue()
-    print(connection._discoveredDevices)
     connection.discoverDevices()
-    print(connection._discoveredDevices)
     if len(connection._discoveredDevices) == 0:
         print("No devices found")
         return
     connection.connectDevice(IPAddress)
     if connection._connectedDevice is not None:
         print("Connection Success")
-        
+    else:
+        print("Connection Failed")
+    return connection
+
+# Connects to the camera and directly streams it using cv2
+# Choose from 5 colour palettes
+def streamFrame(IPAddress, palette):
+    """
+    Main entry point.
+    """
+    # Connect to device
+    connection = connect(IPAddress)
+
     # Grab Frames
-    frameGrabber = FrameGrabber(connection._connectedDevice)
+    frameGrabber = Device(connection._connectedDevice)
     frameGrabber.setColorPalette(palette)
-    frameGrabber.processFrame(0)
+    frameGrabber.processFrame()
     return
     
     
 
 if __name__ == "__main__":
-    grabFrame("10.1.10.102", Palette.Palette1, Process.Show)
+    streamFrame("10.1.10.102", Palette.Palette1)
