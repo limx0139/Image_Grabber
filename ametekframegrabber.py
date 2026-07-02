@@ -74,15 +74,17 @@ class Device:
     def __init__(self, DeviceAPI):
         # DeviceAPI for selected device
         self._connectedDevice = DeviceAPI
-        self._currentFrame = None
-        # Threading lock to sync the frame grabbing and image processing threads
+        # Threading lock (mutex) to sync the frame grabbing and image processing threads
         self._frame_event_lock    = threading.Lock()
         # Variable to store the ThermalFrame for processings
         self._frame_event         = None
+        # Event to alert listening functions whenever a Thermal Frame is available
         self._frame_availale = threading.Event()
         # Connect up onFrame to fire whenever the API indicates a frame is available
         if self._connectedDevice is not None:
             self._connectedDevice.ThermalFrameAvailable += self.onFrame
+        else:
+            self = None
     
     def __del__(self):
         """
@@ -146,6 +148,8 @@ class ThermalFrame:
         self._image = np.frombuffer(bytes(ThermalFrame.GetTemperatureBitmap().PixelData), dtype=np.uint8).reshape(self._height, self._width, 4)
     def clone(self):
         return ThermalFrame(self)
+    
+    
 # Functions Exported
     
 # Connects to a camera given a string input of its IPAddress.

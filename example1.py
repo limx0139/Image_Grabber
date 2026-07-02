@@ -42,15 +42,17 @@ while(True):
     try:
         # Wait for background thread to send a frame
         Device._frame_availale.wait()
-        # Temparorily block background thread from overwriting the frame while we process it.
+        # Temparorily block background thread from overwriting the frame while we copy it for processing.
         with Device._frame_event_lock:
             if Device._frame_event is None:
                 continue
             frame = fg.ThermalFrame(Device._frame_event)
-        image = np.copy(frame._image)
-        
+            image = np.copy(frame._image)
+            
+# ------------------------------------------------------------------------------------------------------ 
         # Here is where you have access to the thermal frame!
-        
+# ------------------------------------------------------------------------------------------------------    
+   
         # Draw markers for maximum and minimum temperature
         drawMeasurement(image, frame._maxIndex, frame._maxTemp, RED, WHITE)
         drawMeasurement(image, frame._minIndex, frame._minTemp, BLUE, WHITE)
@@ -60,7 +62,11 @@ while(True):
         if key == ord('q'):
             break
         
+# ------------------------------------------------------------------------------------------------------ 
         # Here is where the thermal frame falls out of scope!
+# ------------------------------------------------------------------------------------------------------  
+     
+        # Clear the event flag to wait for the next time the flag is set
         Device._frame_availale.clear()
     except KeyboardInterrupt:
         break
