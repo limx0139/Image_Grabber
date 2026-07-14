@@ -1,0 +1,103 @@
+import asyncio
+import logging
+import random
+import threading
+import time
+from asyncua import Server, ua
+from narwhals import Int64
+
+
+
+async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs, HorizontalROIs, thermalFrameAvailableEvent, geometryLock, stopEvent):
+    '''
+    Starts the OPCUA server.
+    '''
+    if thermalFrameAvailableEvent is None or geometryLock is None or stopEvent is None:
+        raise ValueError("One or more required arguments are None. Please provide valid threading.Event and threading.Lock objects.")
+    _logger = logging.getLogger(__name__)
+    # setup our server
+    server = Server()
+    await server.init()
+    server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
+    server.set_server_name("Geometry Measurement Server")
+    
+    # set up our own namespace, not really necessary but should as spec
+    uri = "http://geometrymeasurement.io"
+    idx = await server.register_namespace(uri)
+    
+    # populating our address space
+    # server.nodes, contains links to very common nodes like objects and root
+    vertobj = await server.nodes.objects.add_object(idx, "verticalGeometryObject")
+    vertvariables = []
+    for i in range(numVerticalROIs):
+        vertvariables.append(await vertobj.add_variable(idx, f"verticalROI{i+1}", i+1))
+        await vertvariables[i].set_writable()
+    horizobj = await server.nodes.objects.add_object(idx, "horizontalGeometryObject")
+    horizvariables = []
+    for i in range(numHorizontalROIs):
+        horizvariables.append(await horizobj.add_variable(idx, f"horizontalROI{i+1}", 5+(i+1)))
+        await horizvariables[i].set_writable()
+        
+    
+    
+    
+    _logger.info("Starting server!")
+    loops = 0
+    startTime = time.time()
+    async with server:
+        for i in range(len(vertvariables)):
+            old_val = await vertvariables[i].get_value()
+
+            _logger.info("Initialise value of verticalROI %d to %.1f", i+1, old_val)
+
+        for i in range(len(horizvariables)):
+            old_val = await horizvariables[i].get_value()
+            _logger.info("Initialise value of horizontalROI %d to %.1f", i+1, old_val)
+            
+        while True:
+            loops += 1
+            elapsedTime = time.time() - startTime
+            if elapsedTime >= 10:
+                endTime = time.time()
+                elapsedTime = endTime - startTime
+                print(f"Server processed {loops} frames in {elapsedTime:.2f} seconds. Average FPS: {loops / elapsedTime:.2f}")
+                startTime = time.time()
+                loops = 0
+            if not stopEvent.is_set():
+                thermalFrameAvailableEvent.wait()  # Wait for the event to be set
+                await updateServer(server, vertvariables, horizvariables, VerticalROIs, HorizontalROIs, geometryLock)
+                thermalFrameAvailableEvent.clear()  # Clear the event for the next iteration
+            else:
+                _logger.info("Stop event set. Stopping server.")
+                break
+ 
+
+async def updateServer(server, vertvariables, horizvariables, VerticalROIs, HorizontalROIs, geometryLock):
+    '''
+    updates the values of the vertical and horizontal ROIs in the server with new values. Should be subscribed to the event where these values are calculated.
+    '''
+    _logger = logging.getLogger(__name__)
+    if geometryLock is None:
+        _logger.warning("Geometry lock is None. Cannot update server.")
+        return
+    with geometryLock:
+        for i in range(len(vertvariables)):
+            old_val = await vertvariables[i].get_value()
+            _logger.info("Set value of verticalROI from %.1f to %.1f", type(old_val), type(VerticalROIs[i]))
+            if not isinstance(VerticalROIs[i], (int, float)):
+                await vertvariables[i].write_value(VerticalROIs[i].item())
+            else:
+                await vertvariables[i].write_value(VerticalROIs[i])
+        # for i in range(len(horizvariables)):
+        #     old_val = await horizvariables[i].get_value()
+        #     _logger.info("Set value of horizontalROI from %.1f to %.1f", old_val, HorizontalROIs[i])
+        #     await horizvariables[i].write_value(HorizontalROIs[i])
+    await asyncio.sleep(0.01)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    asyncio.run(startServer("opc.tcp://0.0.0.0:4840", 10, 10, [random.uniform(0, 100) for _ in range(10)], [random.uniform(0, 100) for _ in range(10)], None, threading.Lock(), None, None), debug=True)
+
+    # while True:
+    #     asyncio.run(updateServer(server, [random.uniform(0, 100) for _ in range(5)], [random.uniform(0, 100) for _ in range(5)]), debug=True)
