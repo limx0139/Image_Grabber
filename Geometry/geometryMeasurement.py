@@ -54,7 +54,6 @@ def measureHorizontalGeometry(horizontalGeometry, edged, numHorizontalROIs):
         y1 = y * height + y1  # Calculate the y position for drawing
         y2 = y * height + y2
         horizontalGeometry[y] = length
-        print(((min_x, y2), (max_x, y1), length))
         coords.append(((min_x, y2), (max_x, y1), length))  # Store min_x, max_x, and y position for drawing
     return coords
 

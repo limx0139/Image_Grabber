@@ -18,8 +18,10 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
     # setup our server
     server = Server()
     await server.init()
-    server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
+    server.set_endpoint("opc.tcp://10.12.121.82:4840/freeopcua/server/")
     server.set_server_name("Geometry Measurement Server")
+    server.set_security_policy([ua.SecurityPolicyType.NoSecurity])
+    server.set_security_IDs(["Anonymous"])
     
     # set up our own namespace, not really necessary but should as spec
     uri = "http://geometrymeasurement.io"
@@ -93,11 +95,6 @@ async def updateServer(server, vertvariables, horizvariables, VerticalROIs, Hori
         #     _logger.info("Set value of horizontalROI from %.1f to %.1f", old_val, HorizontalROIs[i])
         #     await horizvariables[i].write_value(HorizontalROIs[i])
     await asyncio.sleep(0.01)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    asyncio.run(startServer("opc.tcp://0.0.0.0:4840", 10, 10, [random.uniform(0, 100) for _ in range(10)], [random.uniform(0, 100) for _ in range(10)], None, threading.Lock(), None, None), debug=True)
 
     # while True:
     #     asyncio.run(updateServer(server, [random.uniform(0, 100) for _ in range(5)], [random.uniform(0, 100) for _ in range(5)]), debug=True)

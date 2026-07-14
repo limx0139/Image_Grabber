@@ -54,7 +54,7 @@ class MainThread:
         self._horizontalGeometryHistory = np.empty((0, len(self._horizontalGeometry)))  # Initialize an empty array to store horizontal geometry measurements
         self._stopEvent = threading.Event()
         self._stopEvent.clear()  # Ensure the stop event is cleared at the start
-        self._thread = threading.Thread(target=asyncio.run, args=(startServer("opc.tcp://0.0.0.0:4840", 7, 0, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
+        self._thread = threading.Thread(target=asyncio.run, args=(startServer("opc.tcp://0.0.0.0:4840", numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
 
     def run(self):
         """
