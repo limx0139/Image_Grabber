@@ -230,8 +230,8 @@ def main():
     endpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
     pixelConversion = 1
     if len(sys.argv) >= 3:
-       ip = int(sys.argv[1])
-       endpoint = int(sys.argv[2])
+       ip = sys.argv[1]
+       endpoint = sys.argv[2]
        pixelConversion = int(sys.argv[3])
     
    
