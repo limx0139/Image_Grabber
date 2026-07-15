@@ -144,8 +144,8 @@ class MainThread:
                     with self._geometryLock:
                         self._verticalGeometry = self._numVerticalROIs * [0] 
                         self._horizontalGeometry = self._numHorizontalROIs * [0]   
-                    currentVerticalGeometry = None
-                    currentHorizontalGeometry = None   
+                    currentVerticalGeometry = self._numVerticalROIs * [0] 
+                    currentHorizontalGeometry = self._numHorizontalROIs * [0]    
                 
                 # Process the image    
                 else:

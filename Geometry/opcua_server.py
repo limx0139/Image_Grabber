@@ -43,7 +43,7 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
         
     unitobj = await server.nodes.objects.add_object(idx, "unitObject")
         # Measurement value
-    match unit:
+    match units:
         case Unit.PIXELS:
             units = ' pixels' 
         case Unit.MM:
