@@ -104,8 +104,8 @@ def findMinY(ROI):
     return min_y
 
 def convertUnits(array, conversion):
-    for i in len(array):
-        array[i] = array[i] * conversion
+    for value in array:
+        value = value * conversion
 
 
 

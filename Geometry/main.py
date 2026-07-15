@@ -24,7 +24,7 @@ import enums
 
 class MainThread:
 
-    def __init__(self, ipAddress, serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = enums.Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
+    def __init__(self, ipAddress = "10.1.10.102", serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/", numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = enums.Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
         # Initialises connection with camera
         try:
             self._ipAddress = ipAddress
@@ -226,18 +226,19 @@ def main():
     """
     # Get the IP address from command line argument
     # With an IP address of 0 the first compatible camera will be chosen
-    ipAddress = "10.1.10.102"
-    serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
+    ip = "10.1.10.102"
+    endpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
     pixelConversion = 1
     if len(sys.argv) >= 3:
-       #ipAddress = int(sys.argv[1])
-       pixelConversion = int(sys.argv[2])
+       ip = int(sys.argv[1])
+       endpoint = int(sys.argv[2])
+       pixelConversion = int(sys.argv[3])
     
    
     client = None
     
     try:
-      client = MainThread(ipAddress,serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = enums.Unit.MM, pixelConversionIndex= pixelConversion)
+      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = enums.Unit.MM, pixelConversionIndex= pixelConversion)
 
     except Exception as ex:
         print(ex)
