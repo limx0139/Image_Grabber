@@ -1,5 +1,6 @@
 import csv
-import time
+from datetime import datetime
+datetime.now().strftime("%H:%M:%S.%f")
 from pathlib import Path
 class csvWriter:
     
@@ -7,7 +8,7 @@ class csvWriter:
         self._file = None
         self._numVerticalROI = numVerticalROI
         self._numHorizontalROI = numHorizontalROI
-        timestr = time.strftime("%Y-%m-%d-%H-%M-%S")
+        timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         self._fileName = r'logs/'+ 'geometryLogs_' + timestr + '.csv' 
         Path("logs/").mkdir(parents=True, exist_ok=True)
     def writeHeaders(self):
@@ -25,7 +26,7 @@ class csvWriter:
         # Should throw exception, incorrect line data
         return
       with open(self._fileName, 'a', newline='') as csvfile:
-        line.insert(0,time.strftime("%H-%M-%S"))
+        line.insert(0,datetime.now().strftime("%H:%M:%S.%f"))
         writer = csv.writer(csvfile)
         writer.writerow(line)
     def writeBufferedLine(self, bufferedLine):
@@ -44,7 +45,7 @@ class csvWriter:
 # #open and read the file after the appending:
 # with open("demofile.txt") as f:
 #   print(f.read())
-timestr = time.strftime("%Y/%m/%d-%H:%M:%S")
+timestr = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
 print('geometryLogs_' + timestr + '.csv')
 print(timestr)
 fun = csvWriter(5, 5)
