@@ -10,6 +10,7 @@ import time
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
+from csvLogger import csvWriter
 from opcua_server import startServer
 from draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLineandValue, drawVerticalROI
 from geometryMeasurement import measureHorizontalGeometry, measureVerticalGeometry
@@ -56,6 +57,9 @@ class MainThread:
         self._stopEvent.clear()  # Ensure the stop event is cleared at the start
         self._thread = threading.Thread(target=asyncio.run, args=(startServer("opc.tcp://0.0.0.0:4840", numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
 
+        self._csvWriter = csvWriter(self._numVerticalROIs, self._numHorizontalROIs)
+        self._csvWriter.writeHeaders()
+        
     def run(self):
         """
         Main loop to process thermal frames and update the server.
@@ -124,6 +128,7 @@ class MainThread:
                     # Draw the horizontal line and measurement on the image
                     if coords2[y] is not None: 
                         drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], BLACK, currentHorizontalGeometry[y])
+                self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
                 cv2.imshow('Frames', image)
                 cv2.imshow('Frames2', image2)
                 
