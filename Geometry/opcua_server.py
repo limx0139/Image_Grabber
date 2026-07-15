@@ -6,9 +6,11 @@ import time
 from asyncua import Server, ua
 from narwhals import Int64
 
+from main import Unit
 
 
-async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs, HorizontalROIs, thermalFrameAvailableEvent, geometryLock, stopEvent):
+
+async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs, HorizontalROIs, unit, thermalFrameAvailableEvent, geometryLock, stopEvent):
     '''
     Starts the OPCUA server.
     '''
@@ -40,6 +42,19 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
         horizvariables.append(await horizobj.add_variable(idx, f"horizontalROI{i+1}", 5+(i+1)))
         await horizvariables[i].set_writable()
         
+    unitobj = await server.nodes.objects.add_object(idx, "unitObject")
+        # Measurement value
+    match unit:
+        case Unit.PIXELS:
+            units = ' pixels' 
+        case Unit.MM:
+            units = 'mm'
+        case Unit.CM:
+            units = 'cm'
+        case _:
+            units = 'units'
+    unitvar = await unitobj.add_variable(idx, "unit", units)
+        
     
     
     
@@ -62,7 +77,7 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
             if elapsedTime >= 10:
                 endTime = time.time()
                 elapsedTime = endTime - startTime
-                print(f"Server processed {loops} frames in {elapsedTime:.2f} seconds. Average FPS: {loops / elapsedTime:.2f}")
+                print(f"Server processed {loops} frames in {elapsedTime:.2f} seconds. Average FPS: {loops / elapsedTime+0.0001:.2f}")
                 startTime = time.time()
                 loops = 0
             if not stopEvent.is_set():

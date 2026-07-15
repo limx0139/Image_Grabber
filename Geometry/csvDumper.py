@@ -29,6 +29,7 @@ class csvWriter:
         line.insert(0,datetime.now().strftime("%H:%M:%S.%f"))
         writer = csv.writer(csvfile)
         writer.writerow(line)
+        
     def writeBufferedLine(self, bufferedLine):
       #TODO
       return

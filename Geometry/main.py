@@ -2,6 +2,7 @@
 
 from asyncio import graph
 import asyncio
+from enum import Enum
 import logging
 import sys
 import threading
@@ -10,10 +11,11 @@ import time
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
+from plotFuncs import initPlot, updatePlot
 from csvDumper import csvWriter
 from opcua_server import startServer
 from draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLineandValue, drawVerticalROI
-from geometryMeasurement import measureHorizontalGeometry, measureVerticalGeometry
+from geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
 import ametekframegrabber as fg
 from canny import auto_canny, removeReflection
 
@@ -27,39 +29,71 @@ FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 Frame_WIDTH = 640
 Frame_HEIGHT = 480
 
+class Unit(Enum):
+    PIXELS = 1
+    MM = 2
+    CM = 3
+    
+
 class MainThread:
 
-    def __init__(self, ipAddress, serverEndpoint, numVerticalROIs, numHorizontalROIs, reflection_index=0.5):
-        self._ipAddress = ipAddress
+    def __init__(self, ipAddress, serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
+        # Initialises connection with camera
+        try:
+            self._ipAddress = ipAddress
+            self._connectedDevice = fg.connect(ipAddress)
+            self._Device = fg.Device(self._connectedDevice)
+            # Starts a background thread streaming the camera
+            self._Device.startStreaming()
+        except Exception as ex:
+            raise ex
+        
+        # Initialise local parameters for image processing
+        self._reflection_index = reflection_index
+        self._cannySigma = cannySigma
+        self._blurIndex = blurIndex
+        self._pixelConversionIndex = pixelConversionIndex
+        self._unit = unit
+
+        # Initialise local parameters for storing ROI data
         self._numVerticalROIs = numVerticalROIs
         self._numHorizontalROIs = numHorizontalROIs
-        self._reflection_index = reflection_index
-        # Informs the server thread that a new frame is available to update.
-        self._serverFrameAvailable = threading.Event()
-        self._geometryLock = threading.Lock()
-        # Connects to device with IPAddress 10.1.10.102
-        self._connectedDevice = fg.connect(ipAddress)
-        # Instantiates the Device API for that device
-        self._Device = fg.Device(self._connectedDevice)
-        # Starts a background thread streaming the camera
-        self._Device.startStreaming()
-        
-        
         if self._numVerticalROIs == 0 or self._numHorizontalROIs == 0:
             raise ValueError("Number of vertical and horizontal ROIs must be greater than zero.")
-            
-        self._verticalGeometry = self._numVerticalROIs * [0]  # Initialize the vertical geometry list with zeros
-        self._horizontalGeometry = self._numHorizontalROIs * [0]  # Initialize the horizontal geometry list with zeros
-        print("test")
-        self._verticalGeometryHistory = np.empty((0, len(self._verticalGeometry)))  # Initialize an empty array to store vertical geometry measurements
-        self._horizontalGeometryHistory = np.empty((0, len(self._horizontalGeometry)))  # Initialize an empty array to store horizontal geometry measurements
-        self._stopEvent = threading.Event()
+        self._verticalGeometry = self._numVerticalROIs * [0]  
+        self._horizontalGeometry = self._numHorizontalROIs * [0]  
+        self._verticalGeometryHistory = np.empty((0, len(self._verticalGeometry)))  
+        self._horizontalGeometryHistory = np.empty((0, len(self._horizontalGeometry)))  
+        
+        # Initialise threading parameters for server thread
+        self._serverFrameAvailable = threading.Event() # Informs server when frame is available
+        self._stopEvent = threading.Event() # Informs server to shut down
         self._stopEvent.clear()  # Ensure the stop event is cleared at the start
-        self._serverEndpoint = serverEndpoint
+        self._geometryLock = threading.Lock() # Mutex to prevent both threads accessing (self._verticalGeometry and self._horizontalGeometry) at the same time
+        self._serverEndpoint = serverEndpoint # OPCUA server endpoint
         self._serverThread = threading.Thread(target=asyncio.run, args=(startServer(self._serverEndpoint, numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
+        
+        # Initialise csvLogger
+        self._csvDump = csvDump
+        try:
+            if self._csvDump:
+                self._csvWriter = csvWriter(self._numVerticalROIs, self._numHorizontalROIs)
+                self._csvWriter.writeHeaders()
+        except Exception as ex:
+            print(ex + ", CSV logger failed to initialise.")
+            raise ex
+        
+        # Flag to control whether graphs are plotted
+        self._plotGraph = plotGraph
+        
+        # Enum to control what sort of images to show
+        # 0: no images
+        # 1: images
+        # 2: images with ROI demarcated and lengths
+        # 3: images with length
+        self._showImages = showImages
 
-        self._csvWriter = csvWriter(self._numVerticalROIs, self._numHorizontalROIs)
-        self._csvWriter.writeHeaders()
+            
         
     def run(self):
         """
@@ -67,16 +101,23 @@ class MainThread:
         """
         _logger = logging.getLogger(__name__)
         _logger.info("Starting main loop!")
-        plt.ion()
-        self._serverThread.start()
+        if self._plotGraph:
+            plt.ion()
+            
+        try:
+            self._serverThread.start()
+        except Exception as ex:
+            print(ex + ", OPCUA Server Thread failed to run.")
+            raise ex
+        
         loops = 0
         startTime = time.time()
         while(True):
             # Get the latest thermal frame if there is one
-            if loops % 1000 == 0:
+            if loops != 0 and loops % 1000 == 0:
                 endTime = time.time()
                 elapsedTime = endTime - startTime
-                print(f"Camera processed 1000 frames in {elapsedTime:.2f} seconds. Average FPS: {1000 / elapsedTime:.2f}")
+                print(f"Camera processed 1000 frames in {elapsedTime:.2f} seconds. Average FPS: {1000 / elapsedTime+0.0001:.2f}")
                 startTime = time.time()
                 
             try:
@@ -87,6 +128,7 @@ class MainThread:
                     if self._Device._frame_event is None:
                         continue
                     frame = fg.ThermalFrame(self._Device._frame_event)
+                    # Save a copy for the ThermalFrame
                     image = np.copy(frame._image)
                     
         # ------------------------------------------------------------------------------------------------------ 
@@ -94,17 +136,20 @@ class MainThread:
         # ------------------------------------------------------------------------------------------------------    
                 
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                
+                if self._showImages:
+                    image2 = image.copy()
+                    drawVerticalROI(image, WHITE, self._numVerticalROIs)
+                    drawHorizontalROI(image2, WHITE, self._numHorizontalROIs)
+                
+                # Skip processing if no object is found
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-
-                image2 = image.copy()
-                drawVerticalROI(image, WHITE, self._numVerticalROIs)
-                drawHorizontalROI(image2, WHITE, self._numHorizontalROIs)
-                
                 if max_value - min_value < 100:
                     # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
-                    cv2.imshow('Frames', image)
-                    cv2.imshow('Frames2', image2)
+                    if self._showImages:
+                        cv2.imshow('Frames', image)
+                        cv2.imshow('Frames2', image2)
                     coords1 = None
                     coords2 = None
                     currentVerticalGeometry = None
@@ -114,46 +159,50 @@ class MainThread:
                         self._horizontalGeometry = self._numHorizontalROIs * [0]   
                     currentVerticalGeometry = None
                     currentHorizontalGeometry = None   
-                    
+                
+                # Process the image    
                 else:
                     removed_reflection = removeReflection(gray, self._reflection_index)
-                    cv2.imshow('Remove Reflections', removed_reflection)
-                    edged = auto_canny(removed_reflection)
-                    cv2.imshow('Canny Edges', edged)
+                    edged = auto_canny(removed_reflection, sigma = self._cannySigma, blurIndex = self._blurIndex)
                     with self._geometryLock:
                         coords1 = measureVerticalGeometry(self._verticalGeometry, edged, self._numVerticalROIs)
                         coords2 = measureHorizontalGeometry(self._horizontalGeometry, edged, self._numHorizontalROIs)
+                        convertUnits(self._verticalGeometry, self._pixelConversionIndex)
+                        convertUnits(self._horizontalGeometry, self._pixelConversionIndex)
                         currentVerticalGeometry = self._verticalGeometry.copy()  # Make a copy of the current vertical geometry
                         currentHorizontalGeometry = self._horizontalGeometry.copy()  # Make a copy of the current horizontal geometry
-                    # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [currentVerticalGeometry], axis=0)
-                    # self._horizontalGeometryHistory = np.append(self._horizontalGeometryHistory, [currentHorizontalGeometry], axis=0)
-                    # if len(self._verticalGeometryHistory) > 5000:
-                    #     self._verticalGeometryHistory = self._verticalGeometryHistory[len(self._verticalGeometryHistory)-1000:len(self._verticalGeometryHistory)]
+                        
                     
-                    
-                    # Signal the server thread that a new frame is available
+                # Signal the server thread that a new frame is available
                 self._serverFrameAvailable.set() 
-                if coords1 is not None and coords2 is not None:
-                    for x in range(len(coords1)):
-                        # Draw the vertical line and measurement on the image
-                        y1 = coords1[x][0]
-                        y2 = coords1[x][1]
-                        x_pos = coords1[x][2]
-                        if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
-                            drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
-                    for y in range(len(coords2)):
-                        # Draw the horizontal line and measurement on the image
-                        if coords2[y] is not None: 
-                            drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], BLACK, currentHorizontalGeometry[y])
-                self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
-                cv2.imshow('Frames', image)
-                cv2.imshow('Frames2', image2)
+                
+                if self._showImages:
+                    #Draw lengths on the images
+                    if coords1 is not None and coords2 is not None:
+                        for x in range(len(coords1)):
+                            # Draw the vertical line and measurement on the image
+                            y1 = coords1[x][0]
+                            y2 = coords1[x][1]
+                            x_pos = coords1[x][2]
+                            if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
+                                drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
+                        for y in range(len(coords2)):
+                            # Draw the horizontal line and measurement on the image
+                            if coords2[y] is not None: 
+                                drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], BLACK, currentHorizontalGeometry[y])
+                    cv2.imshow('Frames', image)
+                    cv2.imshow('Frames2', image2)
+                    
+                if self._csvDump:
+                    self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
+
+                
                 
                 # if loops == 0:  # Initialize the plot on the first loop
-                #     ax, lines = self.initPlot()
+                #     ax, lines = initPlot()
                     
                 # if loops % 10 == 0:  # Update the plot every 10 loops
-                #     self._updatePlot(ax, lines)
+                #     updatePlot(ax, lines)
 
                     
                 # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
@@ -173,37 +222,16 @@ class MainThread:
                 self._Device._frame_availale.clear()
                 loops += 1
             except KeyboardInterrupt:
+                # Kill all child threads to close gracefully on keyboard interrrupt
+                self._stopEvent.set()  # Signal the server thread to stop
+                self._serverFrameAvailable.set()
+                self._serverThread.join()
                 break
         # Clean up
         cv2.destroyAllWindows()
         self._Device.stopStreaming()
         self._Device.disconnect()
         
-    def initPlot(self):
-        """
-        Initializes the plot for vertical geometry measurements.
-        """
-        plt.figure()
-        plt.title('Vertical Geometry Measurements')
-        plt.xlabel('Frame Number')
-        plt.ylabel('Length (pixels)')
-        ax = plt.gca()
-        ax.set_ylim(0, 500)
-        lines = []
-        for i in range(self._numVerticalROIs):
-            lines.append(plt.plot(range(len(self._verticalGeometryHistory)), self._verticalGeometryHistory[:,i], label=f'ROI {i+1}'))
-        plt.legend()
-        return ax, lines
-    def _updatePlot(self, ax, lines):
-        """
-        Updates the plot with the latest vertical geometry measurements.
-        """
-        for i in range(len(lines)):
-            lines[i][0].set_data(range(len(self._verticalGeometryHistory)), self._verticalGeometryHistory[:, i])
-        ax.set_xlim(max(0, len(self._verticalGeometryHistory)-501), len(self._verticalGeometryHistory)-1)
-        
-        plt.draw()
-        plt.pause(0.01)
 
 def main():
     """
@@ -216,15 +244,17 @@ def main():
     if len(sys.argv) >= 2:
        ipAddress = int(sys.argv[1])
        return
-       client = None
+   
+    client = None
     
     try:
-      client = MainThread(ipAddress,serverEndpoint, 10, 10)
+      client = MainThread(ipAddress,serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10)
 
     except Exception as ex:
         print(ex)
         return
     client.run()
+
 
 
 if __name__ == "__main__":

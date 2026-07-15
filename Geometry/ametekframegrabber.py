@@ -158,13 +158,12 @@ def connect(IPAddress):
     connection = ConnectLANDDialogue()
     connection.discoverDevices()
     if len(connection._discoveredDevices) == 0:
-        print("No devices found")
-        return
+        raise Exception("Error: No Cameras Founds")
     connection.connectDevice(IPAddress)
     if connection._connectedDevice is not None:
         print("Connection Success")
     else:
-        print("Connection Failed")
+        raise Exception("Error: Connection to Camera Failed.")
     return connection._connectedDevice
 
 # Connects to the camera and directly streams it using cv2
