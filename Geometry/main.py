@@ -132,7 +132,8 @@ class MainThread:
                 # Skip processing if no object is found
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-                if max_value - min_value < 900:
+                #if max_value - min_value < 100:
+                if False:
                     # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
                     if self._showImages:
                         cv2.imshow('Frames', image)

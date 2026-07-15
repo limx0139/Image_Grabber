@@ -107,7 +107,6 @@ async def updateServer(server, vertvariables, horizvariables, VerticalROIs, Hori
         for i in range(len(horizvariables)):
             old_val = await horizvariables[i].get_value()
             _logger.info("Set value of horizontalROI%d from %.1f to %.1f", i, old_val, HorizontalROIs[i])
-            print(f"Set value of horizontalROI%d from %.1f to %.1f", i, old_val, HorizontalROIs[i])
             if not isinstance(HorizontalROIs[i], (int, float)):
                 await horizvariables[i].write_value(HorizontalROIs[i].item())
             else:
