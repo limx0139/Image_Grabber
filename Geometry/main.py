@@ -27,9 +27,11 @@ class MainThread:
     def __init__(self, ipAddress = "10.1.10.102", serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/", numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = enums.Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
         # Initialises connection with camera
         try:
+            
             self._ipAddress = ipAddress
             self._connectedDevice = fg.connect(ipAddress)
             self._Device = fg.Device(self._connectedDevice)
+            print(self._Device.supportProfile())
             # Starts a background thread streaming the camera
             self._Device.startStreaming()
         except Exception as ex:

@@ -129,6 +129,10 @@ class Device:
             # by the SDK once the callback returns.
             self._frame_event = args.ThermalFrame.Clone()
             self._frame_availale.set()
+            
+    def supportProfile(self):
+        if self._connectedDevice is not None:
+            return self._connectedDevice.SupportsProfiles()
     
 
 

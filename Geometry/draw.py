@@ -64,6 +64,6 @@ def drawHorizontalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
         case _:
             units = 'units'
     text          = "{}".format(round(value, 1)) + units
-    text_position = (x, y + 5)
+    text_position = (x, y + 10)
     cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
          
