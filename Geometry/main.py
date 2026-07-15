@@ -132,7 +132,7 @@ class MainThread:
                 # Skip processing if no object is found
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-                if max_value - min_value < 100:
+                if max_value - min_value < 900:
                     # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
                     if self._showImages:
                         cv2.imshow('Frames', image)
@@ -172,11 +172,11 @@ class MainThread:
                             y2 = coords1[x][1]
                             x_pos = coords1[x][2]
                             if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
-                                drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), enums.BLACK, currentVerticalGeometry[x])
+                                drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), enums.BLACK, currentVerticalGeometry[x], unit = self._unit)
                         for y in range(len(coords2)):
                             # Draw the horizontal line and measurement on the image
                             if coords2[y] is not None: 
-                                drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], enums.BLACK, currentHorizontalGeometry[y])
+                                drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], enums.BLACK, currentHorizontalGeometry[y], unit = self._unit)
                     cv2.imshow('Frames', image)
                     cv2.imshow('Frames2', image2)
                     

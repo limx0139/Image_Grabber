@@ -23,7 +23,7 @@ def drawHorizontalROI(image, color, numHorizontalROIs):
     for x in range(width, num_cols, width):
         cv2.line(image, (0, x), (num_cols, x), color, thickness)
 
-def drawVerticalLineandValue(image, z1, z2, color, value, unit):
+def drawVerticalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     thickness   = 1
     x1, y1 = z1
     x2, y2 = z2
@@ -45,7 +45,7 @@ def drawVerticalLineandValue(image, z1, z2, color, value, unit):
     text_position = (x + 5, y)
     cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
          
-def drawHorizontalLineandValue(image, z1, z2, color, value, unit):
+def drawHorizontalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     thickness   = 1
     x1, y1 = z1
     x2, y2 = z2
