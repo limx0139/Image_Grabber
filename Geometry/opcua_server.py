@@ -9,7 +9,7 @@ from enums import Unit
 
 
 
-async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs, HorizontalROIs, thermalFrameAvailableEvent, geometryLock, stopEvent, unit = Unit.PIXELS):
+async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs, HorizontalROIs, thermalFrameAvailableEvent, geometryLock, stopEvent, units = Unit.PIXELS):
     '''
     Starts the OPCUA server.
     '''

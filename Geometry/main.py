@@ -58,7 +58,7 @@ class MainThread:
         self._stopEvent.clear()  # Ensure the stop event is cleared at the start
         self._geometryLock = threading.Lock() # Mutex to prevent both threads accessing (self._verticalGeometry and self._horizontalGeometry) at the same time
         self._serverEndpoint = serverEndpoint # OPCUA server endpoint
-        self._serverThread = threading.Thread(target=asyncio.run, args=(startServer(self._serverEndpoint, numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent, unit = unit),))
+        self._serverThread = threading.Thread(target=asyncio.run, args=(startServer(self._serverEndpoint, numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent, units = unit),))
         
         # Initialise csvLogger
         self._csvDump = csvDump
