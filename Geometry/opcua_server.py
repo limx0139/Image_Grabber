@@ -18,7 +18,7 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
     # setup our server
     server = Server()
     await server.init()
-    server.set_endpoint("opc.tcp://10.12.121.82:4840/freeopcua/server/")
+    server.set_endpoint(endpoint)
     server.set_server_name("Geometry Measurement Server")
     server.set_security_policy([ua.SecurityPolicyType.NoSecurity])
     server.set_security_IDs(["Anonymous"])
@@ -85,15 +85,19 @@ async def updateServer(server, vertvariables, horizvariables, VerticalROIs, Hori
     with geometryLock:
         for i in range(len(vertvariables)):
             old_val = await vertvariables[i].get_value()
-            _logger.info("Set value of verticalROI from %.1f to %.1f", type(old_val), type(VerticalROIs[i]))
+            _logger.info("Set value of verticalROI%d from %.1f to %.1f", i, type(old_val), type(VerticalROIs[i]))
             if not isinstance(VerticalROIs[i], (int, float)):
                 await vertvariables[i].write_value(VerticalROIs[i].item())
             else:
                 await vertvariables[i].write_value(VerticalROIs[i])
-        # for i in range(len(horizvariables)):
-        #     old_val = await horizvariables[i].get_value()
-        #     _logger.info("Set value of horizontalROI from %.1f to %.1f", old_val, HorizontalROIs[i])
-        #     await horizvariables[i].write_value(HorizontalROIs[i])
+        for i in range(len(horizvariables)):
+            old_val = await horizvariables[i].get_value()
+            _logger.info("Set value of horizontalROI%d from %.1f to %.1f", i, old_val, HorizontalROIs[i])
+            print(f"Set value of horizontalROI%d from %.1f to %.1f", i, old_val, HorizontalROIs[i])
+            if not isinstance(HorizontalROIs[i], (int, float)):
+                await horizvariables[i].write_value(HorizontalROIs[i].item())
+            else:
+                await horizvariables[i].write_value(HorizontalROIs[i])
     await asyncio.sleep(0.01)
 
     # while True:

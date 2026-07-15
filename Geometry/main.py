@@ -10,7 +10,7 @@ import time
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
-from csvLogger import csvWriter
+from csvDumper import csvWriter
 from opcua_server import startServer
 from draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLineandValue, drawVerticalROI
 from geometryMeasurement import measureHorizontalGeometry, measureVerticalGeometry
@@ -29,7 +29,7 @@ Frame_HEIGHT = 480
 
 class MainThread:
 
-    def __init__(self, ipAddress, numVerticalROIs, numHorizontalROIs, reflection_index=0.5):
+    def __init__(self, ipAddress, serverEndpoint, numVerticalROIs, numHorizontalROIs, reflection_index=0.5):
         self._ipAddress = ipAddress
         self._numVerticalROIs = numVerticalROIs
         self._numHorizontalROIs = numHorizontalROIs
@@ -55,7 +55,8 @@ class MainThread:
         self._horizontalGeometryHistory = np.empty((0, len(self._horizontalGeometry)))  # Initialize an empty array to store horizontal geometry measurements
         self._stopEvent = threading.Event()
         self._stopEvent.clear()  # Ensure the stop event is cleared at the start
-        self._thread = threading.Thread(target=asyncio.run, args=(startServer("opc.tcp://0.0.0.0:4840", numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
+        self._serverEndpoint = serverEndpoint
+        self._serverThread = threading.Thread(target=asyncio.run, args=(startServer(self._serverEndpoint, numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
 
         self._csvWriter = csvWriter(self._numVerticalROIs, self._numHorizontalROIs)
         self._csvWriter.writeHeaders()
@@ -67,7 +68,7 @@ class MainThread:
         _logger = logging.getLogger(__name__)
         _logger.info("Starting main loop!")
         plt.ion()
-        self._thread.start()
+        self._serverThread.start()
         loops = 0
         startTime = time.time()
         while(True):
@@ -95,16 +96,17 @@ class MainThread:
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-                if max_value - min_value < 50:
+
+                image2 = image.copy()
+                drawVerticalROI(image, WHITE, self._numVerticalROIs)
+                drawHorizontalROI(image2, WHITE, self._numHorizontalROIs)
+                if max_value - min_value < 100:
                     self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
-                    return
+                    continue
                 removed_reflection = removeReflection(gray, self._reflection_index)
                 cv2.imshow('Remove Reflections', removed_reflection)
                 edged = auto_canny(removed_reflection)
                 cv2.imshow('Canny Edges', edged)
-                image2 = image.copy()
-                drawVerticalROI(image, WHITE, self._numVerticalROIs)
-                drawHorizontalROI(image2, WHITE, self._numHorizontalROIs)
                 with self._geometryLock:
                     coords1 = measureVerticalGeometry(self._verticalGeometry, edged, self._numVerticalROIs)
                     coords2 = measureHorizontalGeometry(self._horizontalGeometry, edged, self._numHorizontalROIs)
@@ -145,7 +147,7 @@ class MainThread:
                     
                     self._stopEvent.set()  # Signal the server thread to stop
                     self._serverFrameAvailable.set()
-                    self._thread.join()
+                    self._serverThread.join()
                     break
                 
         # ------------------------------------------------------------------------------------------------------ 
@@ -195,13 +197,14 @@ def main():
     # Get the IP address from command line argument
     # With an IP address of 0 the first compatible camera will be chosen
     ipAddress = "10.1.10.102"
+    serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
     if len(sys.argv) >= 2:
        ipAddress = int(sys.argv[1])
        return
        client = None
-       
+    
     try:
-      client = MainThread(ipAddress, 10, 10)
+      client = MainThread(ipAddress,serverEndpoint, 10, 10)
 
     except Exception as ex:
         print(ex)
