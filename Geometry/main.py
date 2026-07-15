@@ -58,7 +58,7 @@ class MainThread:
         self._stopEvent.clear()  # Ensure the stop event is cleared at the start
         self._geometryLock = threading.Lock() # Mutex to prevent both threads accessing (self._verticalGeometry and self._horizontalGeometry) at the same time
         self._serverEndpoint = serverEndpoint # OPCUA server endpoint
-        self._serverThread = threading.Thread(target=asyncio.run, args=(startServer(self._serverEndpoint, numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent),))
+        self._serverThread = threading.Thread(target=asyncio.run, args=(startServer(self._serverEndpoint, numVerticalROIs, numHorizontalROIs, self._verticalGeometry, self._horizontalGeometry, self._serverFrameAvailable, self._geometryLock, self._stopEvent, units = unit),))
         
         # Initialise csvLogger
         self._csvDump = csvDump
@@ -228,14 +228,16 @@ def main():
     # With an IP address of 0 the first compatible camera will be chosen
     ipAddress = "10.1.10.102"
     serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
-    if len(sys.argv) >= 2:
-       ipAddress = int(sys.argv[1])
-       return
+    pixelConversion = 1
+    if len(sys.argv) >= 3:
+       #ipAddress = int(sys.argv[1])
+       pixelConversion = int(sys.argv[2])
+    
    
     client = None
     
     try:
-      client = MainThread(ipAddress,serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10)
+      client = MainThread(ipAddress,serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = enums.Units.MM, pixelConversionIndex= pixelConversion)
 
     except Exception as ex:
         print(ex)

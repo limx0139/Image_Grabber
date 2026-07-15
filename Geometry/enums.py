@@ -17,3 +17,4 @@ class Unit(Enum):
     PIXELS = 1
     MM = 2
     CM = 3
+    UNITS = 4
