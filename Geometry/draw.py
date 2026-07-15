@@ -4,7 +4,7 @@ import math
 import cv2
 from matplotlib import image
 
-from main import Unit
+from enums import Unit
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SIZE = 0.4
 
