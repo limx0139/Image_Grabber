@@ -1,9 +1,14 @@
 import asyncio
+from enum import Enum
 import logging
 
 from asyncua import Server, ua
 from asyncua.common.methods import uamethod
 
+class Unit(Enum):
+    PIXELS = 1
+    MM = 2
+    CM = 3
 
 @uamethod
 def func(parent, value):
@@ -34,6 +39,19 @@ async def main():
         [ua.VariantType.Int64],
         [ua.VariantType.Int64],
     )
+    unit = Unit.PIXELS
+    unitobj = await server.nodes.objects.add_object(idx, "unitObject")
+    # Measurement value
+    match unit:
+        case Unit.PIXELS:
+            units = ' pixels' 
+        case Unit.MM:
+            units = 'mm'
+        case Unit.CM:
+            units = 'cm'
+        case _:
+            units = 'units'
+    unitvar = await unitobj.add_variable(idx, "unit", units)
     _logger.info("Starting server!")
     async with server:
         while True:

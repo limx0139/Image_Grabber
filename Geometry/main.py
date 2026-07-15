@@ -1,6 +1,5 @@
 # Example Script to draw max and min temperature onto the image using opencv2
 
-from asyncio import graph
 import asyncio
 from enum import Enum
 import logging
@@ -18,26 +17,14 @@ from draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLine
 from geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
 import ametekframegrabber as fg
 from canny import auto_canny, removeReflection
+import enums
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED   = (0, 0, 255)
-GREEN = (0, 255, 0)
-BLUE  = (255, 0, 0)
-FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 
-Frame_WIDTH = 640
-Frame_HEIGHT = 480
-
-class Unit(Enum):
-    PIXELS = 1
-    MM = 2
-    CM = 3
     
 
 class MainThread:
 
-    def __init__(self, ipAddress, serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
+    def __init__(self, ipAddress, serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = enums.Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
         # Initialises connection with camera
         try:
             self._ipAddress = ipAddress
@@ -139,8 +126,8 @@ class MainThread:
                 
                 if self._showImages:
                     image2 = image.copy()
-                    drawVerticalROI(image, WHITE, self._numVerticalROIs)
-                    drawHorizontalROI(image2, WHITE, self._numHorizontalROIs)
+                    drawVerticalROI(image, enums.WHITE, self._numVerticalROIs)
+                    drawHorizontalROI(image2, enums.WHITE, self._numHorizontalROIs)
                 
                 # Skip processing if no object is found
                 max_value = np.max(gray)
@@ -185,11 +172,11 @@ class MainThread:
                             y2 = coords1[x][1]
                             x_pos = coords1[x][2]
                             if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
-                                drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
+                                drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), enums.BLACK, currentVerticalGeometry[x])
                         for y in range(len(coords2)):
                             # Draw the horizontal line and measurement on the image
                             if coords2[y] is not None: 
-                                drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], BLACK, currentHorizontalGeometry[y])
+                                drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], enums.BLACK, currentHorizontalGeometry[y])
                     cv2.imshow('Frames', image)
                     cv2.imshow('Frames2', image2)
                     
