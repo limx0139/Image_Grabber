@@ -237,7 +237,7 @@ def main():
     client = None
     
     try:
-      client = MainThread(ipAddress,serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = enums.Units.MM, pixelConversionIndex= pixelConversion)
+      client = MainThread(ipAddress,serverEndpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = enums.Unit.MM, pixelConversionIndex= pixelConversion)
 
     except Exception as ex:
         print(ex)
