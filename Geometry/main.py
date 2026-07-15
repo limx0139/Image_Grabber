@@ -100,36 +100,51 @@ class MainThread:
                 image2 = image.copy()
                 drawVerticalROI(image, WHITE, self._numVerticalROIs)
                 drawHorizontalROI(image2, WHITE, self._numHorizontalROIs)
-                if max_value - min_value < 100:
-                    self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
-                    continue
-                removed_reflection = removeReflection(gray, self._reflection_index)
-                cv2.imshow('Remove Reflections', removed_reflection)
-                edged = auto_canny(removed_reflection)
-                cv2.imshow('Canny Edges', edged)
-                with self._geometryLock:
-                    coords1 = measureVerticalGeometry(self._verticalGeometry, edged, self._numVerticalROIs)
-                    coords2 = measureHorizontalGeometry(self._horizontalGeometry, edged, self._numHorizontalROIs)
-                    currentVerticalGeometry = self._verticalGeometry.copy()  # Make a copy of the current vertical geometry
-                    currentHorizontalGeometry = self._horizontalGeometry.copy()  # Make a copy of the current horizontal geometry
-                self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [currentVerticalGeometry], axis=0)
-                # self._horizontalGeometryHistory = np.append(self._horizontalGeometryHistory, [currentHorizontalGeometry], axis=0)
-                if len(self._verticalGeometryHistory) > 5000:
-                    self._verticalGeometryHistory = self._verticalGeometryHistory[len(self._verticalGeometryHistory)-1000:len(self._verticalGeometryHistory)]
-                # Signal the server thread that a new frame is available
-                self._serverFrameAvailable.set() 
                 
-                for x in range(len(coords1)):
-                    # Draw the vertical line and measurement on the image
-                    y1 = coords1[x][0]
-                    y2 = coords1[x][1]
-                    x_pos = coords1[x][2]
-                    if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
-                        drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
-                for y in range(len(coords2)):
-                    # Draw the horizontal line and measurement on the image
-                    if coords2[y] is not None: 
-                        drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], BLACK, currentHorizontalGeometry[y])
+                if max_value - min_value < 100:
+                    # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
+                    cv2.imshow('Frames', image)
+                    cv2.imshow('Frames2', image2)
+                    coords1 = None
+                    coords2 = None
+                    currentVerticalGeometry = None
+                    currentHorizontalGeometry = None
+                    with self._geometryLock:
+                        self._verticalGeometry = self._numVerticalROIs * [0] 
+                        self._horizontalGeometry = self._numHorizontalROIs * [0]   
+                    currentVerticalGeometry = None
+                    currentHorizontalGeometry = None   
+                    
+                else:
+                    removed_reflection = removeReflection(gray, self._reflection_index)
+                    cv2.imshow('Remove Reflections', removed_reflection)
+                    edged = auto_canny(removed_reflection)
+                    cv2.imshow('Canny Edges', edged)
+                    with self._geometryLock:
+                        coords1 = measureVerticalGeometry(self._verticalGeometry, edged, self._numVerticalROIs)
+                        coords2 = measureHorizontalGeometry(self._horizontalGeometry, edged, self._numHorizontalROIs)
+                        currentVerticalGeometry = self._verticalGeometry.copy()  # Make a copy of the current vertical geometry
+                        currentHorizontalGeometry = self._horizontalGeometry.copy()  # Make a copy of the current horizontal geometry
+                    # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [currentVerticalGeometry], axis=0)
+                    # self._horizontalGeometryHistory = np.append(self._horizontalGeometryHistory, [currentHorizontalGeometry], axis=0)
+                    # if len(self._verticalGeometryHistory) > 5000:
+                    #     self._verticalGeometryHistory = self._verticalGeometryHistory[len(self._verticalGeometryHistory)-1000:len(self._verticalGeometryHistory)]
+                    
+                    
+                    # Signal the server thread that a new frame is available
+                self._serverFrameAvailable.set() 
+                if coords1 is not None and coords2 is not None:
+                    for x in range(len(coords1)):
+                        # Draw the vertical line and measurement on the image
+                        y1 = coords1[x][0]
+                        y2 = coords1[x][1]
+                        x_pos = coords1[x][2]
+                        if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
+                            drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
+                    for y in range(len(coords2)):
+                        # Draw the horizontal line and measurement on the image
+                        if coords2[y] is not None: 
+                            drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], BLACK, currentHorizontalGeometry[y])
                 self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
                 cv2.imshow('Frames', image)
                 cv2.imshow('Frames2', image2)
