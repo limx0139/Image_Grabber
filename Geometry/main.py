@@ -209,8 +209,9 @@ class MainThread:
                 # Clear the event flag to wait for the next time the flag is set
                 self._Device._frame_availale.clear()
                 loops += 1
-            except KeyboardInterrupt:
+            except Exception as ex:
                 # Kill all child threads to close gracefully on keyboard interrrupt
+                print(ex)
                 self._stopEvent.set()  # Signal the server thread to stop
                 self._serverFrameAvailable.set()
                 self._serverThread.join()
