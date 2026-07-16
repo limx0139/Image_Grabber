@@ -14,16 +14,14 @@ RED   = (0, 0, 255)
 GREEN = (0, 255, 0)
 BLUE  = (255, 0, 0)
 
-def drawOverlay(image):
+def drawOverlay(image, focusPosition):
     """
     Superimposes an overlay over the false color image.
     """
 
-    if len(opticsText) != 0:
-        opticsText = ' {}'.format(opticsText)
-
     # Overlay text
     text = [
+            'Focus Position: {} '.format(round(focusPosition, 1)), 
             'i: MoveIn', 
             'o: MoveOut',
             'q: Quit']
@@ -67,7 +65,7 @@ def streamWithFocusAdjust(Device):
     # ------------------------------------------------------------------------------------------------------ 
             # Here is where you have access to the thermal frame!
     # ------------------------------------------------------------------------------------------------------    
-            drawOverlay(image)
+            drawOverlay(image, Device.getFocusPosition())
             cv2.imshow('Frames', image)
             # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
             key = cv2.waitKey(1) & 0xFF

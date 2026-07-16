@@ -243,8 +243,17 @@ class Device:
                 convertedFocusType = li.Enums.FocusAdjustment.SettoValue
             case _:
                 raise TypeError
-        self._connectedDevice.AdjustFocus(focusType, UInt32(position))
-
+        print("testtt")
+        self._connectedDevice.AdjustFocus(convertedFocusType, UInt32(position))
+    def getFocusPosition(self):
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        response = Response(self._connectedDevice.GetFocusPosition())
+        Code = response._responseCode
+        if Code is not ResponseCode.Success:
+            raise Exception(Code)
+        else:
+            return response._value
             
         
 class Response:
