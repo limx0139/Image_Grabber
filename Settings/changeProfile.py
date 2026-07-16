@@ -1,7 +1,7 @@
 
 import sys
 
-from Settings import stream
+from stream import stream
 from connectionHandler import ConnectionHandler
 import ametekframegrabber as fg
 
@@ -15,7 +15,9 @@ def main():
     profile = 0
     if len(sys.argv) >= 3:
        ip = sys.argv[1]
-       profile = sys.argv[1]
+       profile = int(sys.argv[2])
+    else:
+        raise Exception("InputError: Expected inputs, ipaddress and profile.")
 
     
    
