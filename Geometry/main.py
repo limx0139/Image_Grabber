@@ -31,8 +31,8 @@ class MainThread:
             self._ipAddress = ipAddress
             self._connectedDevice = fg.connect(ipAddress)
             self._Device = fg.Device(self._connectedDevice)
-            print(self._Device.supportProfile())
             # Starts a background thread streaming the camera
+            print(self._Device.getTemperatureRange())
             self._Device.startStreaming()
         except Exception as ex:
             raise ex
@@ -75,11 +75,6 @@ class MainThread:
         # Flag to control whether graphs are plotted
         self._plotGraph = plotGraph
         
-        # Enum to control what sort of images to show
-        # 0: no images
-        # 1: images
-        # 2: images with ROI demarcated and lengths
-        # 3: images with length
         self._showImages = showImages
 
             
@@ -134,8 +129,9 @@ class MainThread:
                 # Skip processing if no object is found
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-                #if max_value - min_value < 100:
-                if False:
+
+                if max_value - min_value < 100:
+                #if False:
                     # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
                     if self._showImages:
                         cv2.imshow('Frames', image)
