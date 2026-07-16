@@ -1,7 +1,7 @@
 
 import ametekframegrabber as fg
 
-class SettingsHandler:
+class ConnectionHandler:
 
     def __init__(self, ipAddress):
         # Initialises connection with camera
@@ -16,7 +16,7 @@ class SettingsHandler:
 
     def changeProfile(self, profile):
         """
-        Changes Camera Profile
+        Changes Camera Profile, Camera restarts after this command.
         """
         self._Device.setActiveProfile(profile)
         self._Device.disconnect()
