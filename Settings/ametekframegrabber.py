@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import os
 from enum import Enum
-from System import String, Boolean, Array, Int32
+from System import String, Boolean, Array, Int32, UInt32
 
 # Finds the directory of the LandImagerSDK.dll, which should be in the same directory as the script
 cwd = os.getcwd()
@@ -31,6 +31,11 @@ class ResponseCode(Enum):
     Error = 2
     NotSupported = 3
     Success = 4
+    
+class FocusAdjustment(Enum):
+    MoveIn = 1
+    MoveOut = 2
+    SettoValue = 3
 
         
     
@@ -192,11 +197,12 @@ class Device:
             raise Exception("Error: Device does not Support Input Profile")
         try:
             responseCode = self._connectedDevice.SetActiveProfile(Int32(profile))
-            response = Response.fromResponseCode(responseCode, None)
+            response = Response(None)
+            response.fromResponseCode(responseCode, None)
         except Exception as ex:
             raise ex
-        # if response._responseCode is not ResponseCode.Success:
-        #     raise Exception(response._responseCode)
+        if response._responseCode is not ResponseCode.Success:
+            raise Exception(response._responseCode)
 
 
 
@@ -223,18 +229,39 @@ class Device:
         else:
             raise Exception("Error: Device not Connected")
         
+    def adjustFocus(self, focusType, position):
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        if not isinstance(focusType, FocusAdjustment):
+            raise Exception("TypeError: 1st Argument")
+        match focusType:
+            case FocusAdjustment.MoveIn:
+                convertedFocusType = li.Enums.FocusAdjustment.MoveIn
+            case FocusAdjustment.MoveOut:
+                convertedFocusType = li.Enums.FocusAdjustment.MoveOut
+            case FocusAdjustment.SettoValue:
+                convertedFocusType = li.Enums.FocusAdjustment.SettoValue
+            case _:
+                raise TypeError
+        self._connectedDevice.AdjustFocus(focusType, UInt32(position))
+
+            
+        
 class Response:
     def __init__(self, response):
-        match response.Code:
-            case li.Enums.ResponseCode.Disconnected:
-                self._responseCode = ResponseCode.Disconnected 
-            case li.Enums.ResponseCode.Error:
-                self._responseCode = ResponseCode.Error 
-            case li.Enums.ResponseCode.NotSupported:
-                self._responseCode = ResponseCode.NotSupported 
-            case li.Enums.ResponseCode.Success:
-                self._responseCode = ResponseCode.Success 
-        self._value = response.Value
+        if response is not None:
+            match response.Code:
+                case li.Enums.ResponseCode.Disconnected:
+                    self._responseCode = ResponseCode.Disconnected 
+                case li.Enums.ResponseCode.Error:
+                    self._responseCode = ResponseCode.Error 
+                case li.Enums.ResponseCode.NotSupported:
+                    self._responseCode = ResponseCode.NotSupported 
+                case li.Enums.ResponseCode.Success:
+                    self._responseCode = ResponseCode.Success 
+                case _:
+                    self._responseCode = None
+            self._value = response.Value
     @classmethod
     def fromResponseCode(cls, responseCode, value):
         match responseCode:
@@ -247,7 +274,7 @@ class Response:
             case li.Enums.ResponseCode.Success:
                 cls._responseCode = ResponseCode.Success 
             case _:
-                print(responseCode.toString())
+                raise TypeError
         cls._value = value
 
 
