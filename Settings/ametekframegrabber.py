@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import os
 from enum import Enum
-from System import String, Boolean, Array, Int32, UInt32
+from System import String, Boolean, Array, Int32, UInt32, Double
 
 # Finds the directory of the LandImagerSDK.dll, which should be in the same directory as the script
 cwd = os.getcwd()
@@ -240,11 +240,19 @@ class Device:
             case FocusAdjustment.MoveOut:
                 convertedFocusType = li.Enums.FocusAdjustment.MoveOut
             case FocusAdjustment.SettoValue:
-                convertedFocusType = li.Enums.FocusAdjustment.SettoValue
+                convertedFocusType = li.Enums.FocusAdjustment.SetToValue
             case _:
                 raise TypeError
-        print("testtt")
-        self._connectedDevice.AdjustFocus(convertedFocusType, UInt32(position))
+        print(self.getFocusPosition())
+        try:
+            responseCode = self._connectedDevice.AdjustFocus(convertedFocusType, UInt32(position))
+            response = Response(None)
+            response.fromResponseCode(responseCode, None)
+        except Exception as ex:
+            raise ex
+        if response._responseCode is not ResponseCode.Success:
+            raise Exception(response._responseCode)
+        
     def getFocusPosition(self):
         if self._connectedDevice is None:
             raise Exception("Error: Device not Connected")
@@ -254,7 +262,17 @@ class Device:
             raise Exception(Code)
         else:
             return response._value
-            
+    def setAutoTargetFocus(self, distance):
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        try:
+            responseCode = self._connectedDevice.SetAutoTargetFocus(Double(distance))
+            response = Response(None)
+            response.fromResponseCode(responseCode, None)
+        except Exception as ex:
+            raise ex
+        if response._responseCode is not ResponseCode.Success:
+            raise Exception(response._responseCode)
         
 class Response:
     def __init__(self, response):

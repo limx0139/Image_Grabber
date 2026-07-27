@@ -49,6 +49,7 @@ def streamWithFocusAdjust(Device):
     """
     # Starts a background thread streaming the camera
     Device.startStreaming()
+    #Device.setAutoTargetFocus(2)
 
     while(True):
         # Get the latest thermal frame if there is one
@@ -72,9 +73,13 @@ def streamWithFocusAdjust(Device):
             if key == ord('q'):
                 break
             elif key == ord('i'):
-                Device.adjustFocus(fg.FocusAdjustment.MoveIn, 1)
+                Device.adjustFocus(fg.FocusAdjustment.MoveIn, 5)
             elif key == ord('o'):
-                Device.adjustFocus(fg.FocusAdjustment.MoveOut, 1)
+                Device.adjustFocus(fg.FocusAdjustment.MoveOut, 5)
+            elif key == ord('s'):
+                Device.adjustFocus(fg.FocusAdjustment.SettoValue, 100)#
+            elif key == ord('a'):
+                Device.setAutoTargetFocus(1.5)
             
     # ------------------------------------------------------------------------------------------------------ 
             # Here is where the thermal frame falls out of scope!

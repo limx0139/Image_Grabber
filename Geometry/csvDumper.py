@@ -2,6 +2,7 @@ import csv
 from datetime import datetime
 datetime.now().strftime("%H:%M:%S.%f")
 from pathlib import Path
+import cv2
 class csvWriter:
     
     def __init__(self, numVerticalROI, numHorizontalROI):
@@ -11,6 +12,8 @@ class csvWriter:
         timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         self._fileName = r'logs/'+ 'geometryLogs_' + timestr + '.csv' 
         Path("logs/").mkdir(parents=True, exist_ok=True)
+        Path("logs/images").mkdir(parents=True, exist_ok=True)
+
     def writeHeaders(self):
       with open(self._fileName, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -33,6 +36,12 @@ class csvWriter:
     def writeBufferedLine(self, bufferedLine):
       #TODO
       return
+    
+    def writeImage(self, image):
+      timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
+      imageName = r'logs/images/'+ 'frame' + timestr + '.png' 
+      cv2.imwrite(imageName, image)
+      
         
       
           

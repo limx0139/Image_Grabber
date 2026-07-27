@@ -122,20 +122,17 @@ class MainThread:
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 
                 if self._showImages:
-                    image2 = image.copy()
                     drawVerticalROI(image, enums.WHITE, self._numVerticalROIs)
-                    drawHorizontalROI(image2, enums.WHITE, self._numHorizontalROIs)
+                    drawHorizontalROI(image, enums.WHITE, self._numHorizontalROIs)
                 
-                # Skip processing if no object is found
+                # Skip processing if no object is found, ie. difference between min and max value is small
                 max_value = np.max(gray)
                 min_value = np.min(gray)
 
                 if max_value - min_value < 100:
-                #if False:
                     # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
                     if self._showImages:
                         cv2.imshow('Frames', image)
-                        cv2.imshow('Frames2', image2)
                     coords1 = None
                     coords2 = None
                     currentVerticalGeometry = None
@@ -175,12 +172,18 @@ class MainThread:
                         for y in range(len(coords2)):
                             # Draw the horizontal line and measurement on the image
                             if coords2[y] is not None: 
-                                drawHorizontalLineandValue(image2, coords2[y][0], coords2[y][1], enums.BLACK, currentHorizontalGeometry[y], unit = self._unit)
+                                drawHorizontalLineandValue(image, coords2[y][0], coords2[y][1], enums.BLACK, currentHorizontalGeometry[y], unit = self._unit)
                     cv2.imshow('Frames', image)
-                    cv2.imshow('Frames2', image2)
-                    
+                 
+                # If setting to create csv log file is on, write the new line onto the csv file
+                # It may be better to create a buffered system to update the csv file every couple of loops, but this likely introduces unnecessary complexity at this stage; read/write operations are not the bottleneck, the opcua server is.   
+                # Might change it to log every second with the image for a middleground
                 if self._csvDump:
                     self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
+                    # Save an image every second, approx every 30 frames
+                    if loops % 30 == 0:
+                        self._csvWriter.writeImage(image)
+                
 
                 
                 

@@ -9,6 +9,7 @@ import numpy as np
 def measureVerticalGeometry(verticalGeometry, edged, numVerticalROIs):
     '''
     Measure the lengths in each vertical ROI and return the lengths as a np list. The lengths are measured in pixels.
+    This function takes in verticalGeometry, an array to be updated with the lengths found in each ROI, edged, the thresholded image nparray, and numVerticalROIs, the number of vertical ROIs.
     '''
     num_rows, num_cols = edged.shape[:2]
     width = num_cols // numVerticalROIs
@@ -32,15 +33,16 @@ def measureVerticalGeometry(verticalGeometry, edged, numVerticalROIs):
 def measureHorizontalGeometry(horizontalGeometry, edged, numHorizontalROIs):
     '''
     Measure the lengths in each horizontal ROI and return the lengths as a np list. The lengths are measured in pixels.
+    This function takes in horizontalGeometry, an array to be updated, edged, the thresholded image nparray, and numHorizontalROIs, the number of horizontal ROIs.
+    Returns an array of tuples, in the form ((min_x, y_pos), (max_x, y_pos), length) for each ROI.
     '''
     num_rows, num_cols = edged.shape[:2]
     height = num_rows // numHorizontalROIs
     coords = []
     for y in range(numHorizontalROIs):
-        # print(f"Measuring horizontal geometry for ROI {y+1}...")
-        # print(horizontalGeometry)
+
         # Extract the horizontal ROI from the edged image
-        if y == numHorizontalROIs - 1:  # Last ROI may be taller due to integer division
+        if y == numHorizontalROIs - 1:  # Last ROI may be taller due to integer division error
             horizontal_ROI = edged[y * height:num_rows, :]
         else:
             horizontal_ROI = edged[y * height:y * height + height, :]
@@ -51,10 +53,9 @@ def measureHorizontalGeometry(horizontalGeometry, edged, numHorizontalROIs):
             continue
         (y1, min_x), (y2, max_x), length = z
 
-        y1 = y * height + y1  # Calculate the y position for drawing
-        y2 = y * height + y2
+        y_pos = y * height + height // 2 # Calculate the y position for drawing
         horizontalGeometry[y] = length
-        coords.append(((min_x, y2), (max_x, y1), length))  # Store min_x, max_x, and y position for drawing
+        coords.append(((min_x, y_pos), (max_x, y_pos), length))  # Store min_x, max_x, and y position for drawing
     return coords
 
     
