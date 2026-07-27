@@ -164,11 +164,8 @@ class MainThread:
                     if coords1 is not None and coords2 is not None:
                         for x in range(len(coords1)):
                             # Draw the vertical line and measurement on the image
-                            y1 = coords1[x][0]
-                            y2 = coords1[x][1]
-                            x_pos = coords1[x][2]
-                            if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
-                                drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), enums.BLACK, currentVerticalGeometry[x], unit = self._unit)
+                            if coords1[x] is not None:  # Only draw if both y1 and y2 are valid
+                                drawVerticalLineandValue(image, coords1[x][0], coords1[x][1], enums.BLACK, currentVerticalGeometry[x], unit = self._unit)
                         for y in range(len(coords2)):
                             # Draw the horizontal line and measurement on the image
                             if coords2[y] is not None: 
