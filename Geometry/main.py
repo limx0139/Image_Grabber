@@ -177,7 +177,7 @@ class MainThread:
                 # Might change it to log every second with the image for a middleground
                 if self._csvDump:
                     self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
-                    # Save an image every second, approx every 30 frames
+                    # Save an image 30 frames, approx every second
                     if loops % 30 == 0:
                         self._csvWriter.writeImage(image)
                 
