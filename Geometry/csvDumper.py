@@ -6,6 +6,11 @@ import cv2
 class csvWriter:
     
     def __init__(self, numVerticalROI, numHorizontalROI):
+        """
+        Initialise the csv writer object.
+        :param numVerticalROI: Number of vertical ROIs.
+        :param numHorizontalROI: Number of horizontal ROIs.
+        """
         self._file = None
         self._numVerticalROI = numVerticalROI
         self._numHorizontalROI = numHorizontalROI
@@ -15,6 +20,9 @@ class csvWriter:
         Path("logs/images").mkdir(parents=True, exist_ok=True)
 
     def writeHeaders(self):
+      """
+      Writes headers to the csv file.
+      """
       with open(self._fileName, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         header = []
@@ -25,6 +33,10 @@ class csvWriter:
           header.append('horizontalROI'+str(i+1))
         writer.writerow(header)
     def writeLine(self, line):
+      """
+      Writes a single line of data to the csv file. Gives it a timestamp on the log.
+      :param line: Array of data, HorizontalROI data appended with VerticalROI data.
+      """
       if len(line) != self._numHorizontalROI + self._numVerticalROI:
         # Should throw exception, incorrect line data
         return
@@ -33,11 +45,12 @@ class csvWriter:
         writer = csv.writer(csvfile)
         writer.writerow(line)
         
-    def writeBufferedLine(self, bufferedLine):
-      #TODO
-      return
     
     def writeImage(self, image):
+      """
+      Saves an image to the logs.
+      :param image: nparray containing image data to be saved.
+      """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
       imageName = r'logs/images/'+ 'frame' + timestr + '.png' 
       cv2.imwrite(imageName, image)

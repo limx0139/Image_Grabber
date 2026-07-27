@@ -7,16 +7,31 @@ from matplotlib import image
 from enums import Unit
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SIZE = 0.4
+WHITE = (255,255,255)
 
-def drawVerticalROI(image, color, numVerticalROIs):
+def drawVerticalROI(image, numVerticalROIs, color = WHITE):
+    """
+    Draws lines on input image demarcating the vertical ROIs
+    :param image: Input image to draw lines on.
+    :param numVerticalROIs: number of vertical ROIs to draw.
+    :param color: color of line. Default is white
+    :return: Edged image.
+    """
 
-      thickness   = 1
-      num_rows, num_cols = image.shape[:2]
-      width = num_cols // numVerticalROIs
-      for x in range(width, num_cols, width):
-          cv2.line(image, (x, 0), (x, num_rows), color, thickness)
+    thickness   = 1
+    num_rows, num_cols = image.shape[:2]
+    width = num_cols // numVerticalROIs
+    for x in range(width, num_cols, width):
+        cv2.line(image, (x, 0), (x, num_rows), color, thickness)
           
-def drawHorizontalROI(image, color, numHorizontalROIs):
+def drawHorizontalROI(image, numHorizontalROIs, color = WHITE):
+    """
+    Draws lines on input image demarcating the horizontal ROIs
+    :param image: Input image to draw lines on.
+    :param numHorizontalROIs: number of horizontal ROIs to draw.
+    :param color: color of line. Default is white
+    :return: Edged image.
+    """
     thickness   = 1
     num_rows, num_cols = image.shape[:2]
     width = num_rows // numHorizontalROIs
@@ -24,6 +39,14 @@ def drawHorizontalROI(image, color, numHorizontalROIs):
         cv2.line(image, (0, x), (num_cols, x), color, thickness)
 
 def drawVerticalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
+    """
+    Draws lines on input image indicating where the vertical length measurement is taken in each ROI
+    :param image: Input image to draw lines on.
+    :param z1: first point
+    :param z2: second point
+    :param value: length value associated with the measurement
+    :param unit: unit of measurement to be printed. Default is Unit.PIXELS
+    """
     thickness   = 1
     x1, y1 = z1
     x2, y2 = z2
@@ -46,6 +69,14 @@ def drawVerticalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
          
 def drawHorizontalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
+    """
+    Draws lines on input image indicating where the horizontal length measurement is taken in each ROI
+    :param image: Input image to draw lines on.
+    :param z1: first point
+    :param z2: second point
+    :param value: length value associated with the measurement
+    :param unit: unit of measurement to be printed. Default is Unit.PIXELS
+    """
     thickness   = 1
     x1, y1 = z1
     x2, y2 = z2

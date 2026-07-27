@@ -11,7 +11,16 @@ from enums import Unit
 
 async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs, HorizontalROIs, thermalFrameAvailableEvent, geometryLock, stopEvent, units = Unit.PIXELS):
     '''
-    Starts the OPCUA server.
+    Starts the OPCUA server on a dedicated thread. Initialises the server then listens on the main thread for frames to be processed. Updated the server with new data when that happens.
+    :param endpoint: A string encoding the opcua endpoint used. Should either be a port of localhost or the ipaddress associated with the server.
+    :param numVerticalROIs: Number of vertical ROIs recorded, needed to initialise the server.
+    :param numHorizontalROIs: Number of horizontal ROIs recorded, needed to initialise the server.
+    :param VerticalROIs: Shared resource with the main thread. Stored information on the lengths of the object in each vertical ROI
+    :param HorizontalROIs: Shared resource with the main thread. Stored information on the lengths of the object in each horizontal ROI
+    :param thermalFrameAvailableEvent: threading.Event object. Is set by the main thread whenever a thermal frame is processed, indicating new data is available.
+    :param geometryLock: threading.Lock object. Ensures threadsafety of VerticalROIs and HorizontalROIs by ensuring only one thread accesses these resources at a time.
+    :param stopEvent: threading.Event object. Is set by the main thread when it receives instructions to shutdowns, telling this thread to terminate as well.
+    :param units: the unit of measurement to record in.
     '''
     if thermalFrameAvailableEvent is None or geometryLock is None or stopEvent is None:
         raise ValueError("One or more required arguments are None. Please provide valid threading.Event and threading.Lock objects.")
@@ -20,11 +29,13 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
     server = Server()
     await server.init()
     server.set_endpoint(endpoint)
+    
+    # Security settings.
     server.set_server_name("Geometry Measurement Server")
     server.set_security_policy([ua.SecurityPolicyType.NoSecurity])
     server.set_security_IDs(["Anonymous"])
     
-    # set up our own namespace, not really necessary but should as spec
+    # set up our own namespace
     uri = "http://geometrymeasurement.io"
     idx = await server.register_namespace(uri)
     
@@ -53,10 +64,7 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
         case _:
             units = 'units'
     unitvar = await unitobj.add_variable(idx, "unit", units)
-        
-    
-    
-    
+
     _logger.info("Starting server!")
     loops = 0
     startTime = time.time()
@@ -90,7 +98,13 @@ async def startServer(endpoint, numVerticalROIs, numHorizontalROIs, VerticalROIs
 
 async def updateServer(server, vertvariables, horizvariables, VerticalROIs, HorizontalROIs, geometryLock):
     '''
-    updates the values of the vertical and horizontal ROIs in the server with new values. Should be subscribed to the event where these values are calculated.
+    Helper function, updates the values of the vertical and horizontal ROIs in the server with new values. Should be subscribed to the event where these values are calculated.
+    :param server: The OPCUA server
+    :param vertvariables: Server locations storing vertical length information.
+    :param horizvariables: Server locations storing horizontal length information.
+    :param VerticalROIs: Shared resource with the main thread. Stored information on the lengths of the object in each vertical ROI
+    :param HorizontalROIs: Shared resource with the main thread. Stored information on the lengths of the object in each horizontal ROI
+    :param geometryLock: threading.Lock object. Ensures threadsafety of VerticalROIs and HorizontalROIs by ensuring only one thread accesses these resources at a time.
     '''
     _logger = logging.getLogger(__name__)
     if geometryLock is None:
@@ -113,5 +127,3 @@ async def updateServer(server, vertvariables, horizvariables, VerticalROIs, Hori
                 await horizvariables[i].write_value(HorizontalROIs[i])
     await asyncio.sleep(0.01)
 
-    # while True:
-    #     asyncio.run(updateServer(server, [random.uniform(0, 100) for _ in range(5)], [random.uniform(0, 100) for _ in range(5)]), debug=True)

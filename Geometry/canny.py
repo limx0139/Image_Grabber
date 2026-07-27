@@ -22,7 +22,10 @@ def auto_canny(image, sigma=5, blurIndex = 5):
 
 def removeReflection(gray, reflection_index):
     """
-    Removes reflections from the gray-scale image based on the reflection index.
+    Removes reflections from the gray-scale image based on the reflection index. Uses the reflective index as a threshold to remove all data below it.
+    :param image: Input image (grayscale).
+    :param reflection_index: The reflective index of the material. 0.9 seems to work the best for the reflective material in the forge.
+    :return: image with reflections removed.
     """
     max_value = np.max(gray)
     threshold_value = reflection_index * max_value

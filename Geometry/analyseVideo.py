@@ -40,8 +40,6 @@ class MainThread:
     def run(self, videoPath):
         """
         Main loop to process thermal frames and update the server.
-        """
-        """
         Loads the video file and processes each frame to detect and draw lines.
         """
         cap = cv2.VideoCapture(videoPath)
@@ -71,7 +69,7 @@ class MainThread:
                 edged = auto_canny(removed_reflection, sigma = 0.1, blurIndex = 5)
                 cv2.imshow('Canny Edges', edged)
             
-                drawVerticalROI(image, WHITE, self._numVerticalROIs)
+                drawVerticalROI(image, self._numVerticalROIs)
                 print(f"Vertical Geometry: {self._verticalGeometry}")
                 coords = measureVerticalGeometry(self._verticalGeometry, edged, self._numVerticalROIs)
                 currentVerticalGeometry = self._verticalGeometry.copy()  # Make a copy of the current vertical geometry
@@ -86,7 +84,7 @@ class MainThread:
                         drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
                 cv2.imshow('Frames', image)
             else:   
-                drawVerticalROI(image, WHITE, self._numVerticalROIs)
+                drawVerticalROI(image, self._numVerticalROIs)
                 cv2.imshow('Frames', image)
 
             # Press Q to quit

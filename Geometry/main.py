@@ -122,8 +122,8 @@ class MainThread:
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 
                 if self._showImages:
-                    drawVerticalROI(image, enums.WHITE, self._numVerticalROIs)
-                    drawHorizontalROI(image, enums.WHITE, self._numHorizontalROIs)
+                    drawVerticalROI(image, self._numVerticalROIs)
+                    drawHorizontalROI(image, self._numHorizontalROIs)
                 
                 # Skip processing if no object is found, ie. difference between min and max value is small
                 max_value = np.max(gray)
@@ -183,12 +183,7 @@ class MainThread:
                 
 
                 
-                
-                # if loops == 0:  # Initialize the plot on the first loop
-                #     ax, lines = initPlot()
-                    
-                # if loops % 10 == 0:  # Update the plot every 10 loops
-                #     updatePlot(ax, lines)
+
 
                     
                 # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
