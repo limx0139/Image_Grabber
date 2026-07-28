@@ -129,7 +129,7 @@ class MainThread:
                 max_value = np.max(gray)
                 min_value = np.min(gray)
 
-                if max_value - min_value < 100:
+                if max_value - min_value > 100:
                     # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
                     if self._showImages:
                         cv2.imshow('Frames', image)
@@ -176,6 +176,7 @@ class MainThread:
                 # It may be better to create a buffered system to update the csv file every couple of loops, but this likely introduces unnecessary complexity at this stage; read/write operations are not the bottleneck, the opcua server is.   
                 # Might change it to log every second with the image for a middleground
                 if self._csvDump:
+                    print('writing to csv')
                     self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
                     # Save an image 30 frames, approx every second
                     if loops % 30 == 0:
@@ -224,20 +225,32 @@ def main():
     ip = "10.1.10.102"
     endpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
     pixelConversion = 1
-    if len(sys.argv) >= 3:
-       ip = sys.argv[1]
-       endpoint = sys.argv[2]
-       pixelConversion = int(sys.argv[3])
-    
-   
+    unitEnum = enums.Unit.PIXELS
+
+    if len(sys.argv) == 5:
+        ip = sys.argv[1]
+        endpoint = sys.argv[2]
+        pixelConversion = int(sys.argv[3])
+        units = str(sys.argv[4])
+        match units:
+            case 'pixels':
+                unitEnum = enums.Unit.PIXELS
+            case 'mm':
+                unitEnum = enums.Unit.MM
+            case 'cm':
+                unitEnum = enums.Unit.CM
+            case '_':
+                raise Exception('InputError: Invalid unit input')
+    elif len(sys.argv) != 1:
+        raise Exception('InputError: Expected 1 or 5 arguments.')
+
     client = None
     
     try:
-      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = enums.Unit.MM, pixelConversionIndex= pixelConversion)
+      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = unitEnum, pixelConversionIndex= pixelConversion)
 
     except Exception as ex:
-        print(ex)
-        return
+        raise ex
     client.run()
 
 

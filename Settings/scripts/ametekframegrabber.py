@@ -343,7 +343,7 @@ def connect(IPAddress):
 
 # Connects to the camera and directly streams it using cv2
 # Choose from 5 colour palettes
-def streamFrame(IPAddress, palette):
+def changePalette(IPAddress, palette):
     """
     Main entry point.
     """
@@ -386,4 +386,4 @@ def showFrames(Device):
     Device.disconnect()
 
 if __name__ == "__main__":
-    streamFrame("10.1.10.102", Palette.Palette1)
+    changePalette("10.1.10.102", Palette.Palette1)

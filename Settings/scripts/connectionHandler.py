@@ -1,5 +1,5 @@
 
-import ametekframegrabber as fg
+import scripts.ametekframegrabber as fg
 
 class ConnectionHandler:
 

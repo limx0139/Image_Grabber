@@ -1,11 +1,9 @@
 
 import sys
 
-import cv2
 
-from stream import streamWithFocusAdjust
-from connectionHandler import ConnectionHandler
-import ametekframegrabber as fg
+from scripts.stream import streamWithFocusAdjust
+from scripts.connectionHandler import ConnectionHandler
 
 
 def main():
@@ -16,7 +14,7 @@ def main():
     # With an IP address of 0 the first compatible camera will be chosen
     ip = "10.1.10.102"
     profile = 0
-    if len(sys.argv) >= 2:
+    if len(sys.argv) == 2:
        ip = sys.argv[1]
     else:
         raise Exception("InputError: Expected IPaddress.")

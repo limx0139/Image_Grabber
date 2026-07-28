@@ -1,9 +1,9 @@
 
 import sys
 
-from stream import stream
-from connectionHandler import ConnectionHandler
-import ametekframegrabber as fg
+from scripts.stream import stream
+from scripts.connectionHandler import ConnectionHandler
+
 
 def main():
     """

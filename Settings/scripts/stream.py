@@ -2,7 +2,7 @@
 #test
 import cv2
 import numpy as np
-import ametekframegrabber as fg
+import scripts.ametekframegrabber as fg
 # Settings for the displayed fonts
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SIZE = 0.4
@@ -66,8 +66,17 @@ def streamWithFocusAdjust(Device):
     # ------------------------------------------------------------------------------------------------------ 
             # Here is where you have access to the thermal frame!
     # ------------------------------------------------------------------------------------------------------    
-            drawOverlay(image, Device.getFocusPosition())
-            cv2.imshow('Frames', image)
+
+            # Change image gradient to allow for better focusing
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            minIntensity = np.min(gray_image)
+            maxIntensity = np.max(gray_image) 
+            m = (255/(maxIntensity-minIntensity))
+            gray_image = np.uint8(m*gray_image - m*minIntensity)
+            image = np.uint8(m*image - m*minIntensity)
+            bgr_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)    
+            drawOverlay(bgr_image, Device.getFocusPosition())
+            cv2.imshow('Frames', bgr_image) 
             # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
@@ -78,8 +87,8 @@ def streamWithFocusAdjust(Device):
                 Device.adjustFocus(fg.FocusAdjustment.MoveOut, 5)
             elif key == ord('s'):
                 Device.adjustFocus(fg.FocusAdjustment.SettoValue, 100)#
-            elif key == ord('a'):
-                Device.setAutoTargetFocus(1.5)
+            # elif key == ord('a'):
+            #     Device.setAutoTargetFocus(1.5)
             
     # ------------------------------------------------------------------------------------------------------ 
             # Here is where the thermal frame falls out of scope!
@@ -93,8 +102,7 @@ def streamWithFocusAdjust(Device):
     cv2.destroyAllWindows()
     Device.stopStreaming()
     Device.disconnect()
-    
-    
+        
 def stream(Device):
 
     """
