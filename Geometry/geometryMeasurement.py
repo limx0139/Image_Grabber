@@ -30,7 +30,7 @@ def measureVerticalGeometry(verticalGeometry, edged, numVerticalROIs):
 
         x_pos = x * width + width // 2  # Calculate the x position for drawing
         verticalGeometry[x] = length
-        coords.append((x_pos, min_y), (x_pos, max_y), length)  # Store min_y, max_y, and x position for drawing
+        coords.append(((x_pos, min_y), (x_pos, max_y), length))  # Store min_y, max_y, and x position for drawing
 
     return coords
 
