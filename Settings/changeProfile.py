@@ -29,7 +29,12 @@ def main():
     except Exception as ex:
         print(ex)
         return
-    client.changeProfile(profile)
+    profileNames = client.getProfileNames()
+    print("Profile Name Options:")
+    for profileName in profileNames:
+        print(profileName)
+        
+    client.changeProfile(profile-1)
     
     client = ConnectionHandler(ip)
     stream(client._Device)

@@ -222,15 +222,19 @@ def main():
     # Get the IP address from command line argument
     # With an IP address of 0 the first compatible camera will be chosen
     ip = "10.1.10.102"
-    endpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/"
+    endpoint = "opc.tcp://0.0.0.0:5555/freeopcua/server/"
     pixelConversion = 1
     unitEnum = enums.Unit.PIXELS
+    inputVerticalROI = 10
+    inputHorizontalROI = 5
 
-    if len(sys.argv) == 5:
+    if len(sys.argv) == 7:
         ip = sys.argv[1]
         endpoint = sys.argv[2]
-        pixelConversion = int(sys.argv[3])
-        units = str(sys.argv[4])
+        inputVerticalROI = int(sys.argv[3])
+        inputHorizontalROI = int(sys.argv[4])
+        pixelConversion = int(sys.argv[5])
+        units = str(sys.argv[6])
         match units:
             case 'pixels':
                 unitEnum = enums.Unit.PIXELS
@@ -241,12 +245,12 @@ def main():
             case '_':
                 raise Exception('InputError: Invalid unit input')
     elif len(sys.argv) != 1:
-        raise Exception('InputError: Expected 1 or 5 arguments.')
+        raise Exception('InputError: Expected 1 or 7 arguments.')
 
     client = None
     
     try:
-      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = 10, numHorizontalROIs = 10, unit = unitEnum, pixelConversionIndex= pixelConversion)
+      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = inputVerticalROI, numHorizontalROIs = inputHorizontalROI, unit = unitEnum, pixelConversionIndex= pixelConversion)
 
     except Exception as ex:
         raise ex

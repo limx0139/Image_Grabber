@@ -6,22 +6,23 @@ import cv2
 class csvWriter:
     
     def __init__(self, numVerticalROI, numHorizontalROI):
-        """
-        Initialise the csv writer object.
-        :param numVerticalROI: Number of vertical ROIs.
-        :param numHorizontalROI: Number of horizontal ROIs.
-        """
-        self._file = None
-        self._numVerticalROI = numVerticalROI
-        self._numHorizontalROI = numHorizontalROI
-        timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        self._fileName = r'logs/'+ 'geometryLogs_' + timestr + '.csv' 
-        Path("logs/").mkdir(parents=True, exist_ok=True)
-        Path("logs/images").mkdir(parents=True, exist_ok=True)
+      """Initialise the csv writer object. Writes csv to logs/ and logs/images/
+        Args:
+          image (cv2.UMAT): Input image (grayscale).
+          numVerticalROI (int): Number of vertical ROIs.
+          numHorizontalROI (int): Number of horizontal ROIs.
+      """
+ 
+      self._file = None
+      self._numVerticalROI = numVerticalROI
+      self._numHorizontalROI = numHorizontalROI
+      timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+      self._fileName = r'logs/'+ 'geometryLogs_' + timestr + '.csv' 
+      Path("logs/").mkdir(parents=True, exist_ok=True)
+      Path("logs/images").mkdir(parents=True, exist_ok=True)
 
     def writeHeaders(self):
-      """
-      Writes headers to the csv file.
+      """Writes headers to the csv file.
       """
       with open(self._fileName, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -33,9 +34,10 @@ class csvWriter:
           header.append('horizontalROI'+str(i+1))
         writer.writerow(header)
     def writeLine(self, line):
-      """
-      Writes a single line of data to the csv file. Gives it a timestamp on the log.
-      :param line: Array of data, HorizontalROI data appended with VerticalROI data.
+      """Writes a single line of data to the csv file. Gives it a timestamp on the log.
+
+        Args:
+          line (Array):  Array of data, HorizontalROI data appended with VerticalROI data.
       """
       if len(line) != self._numHorizontalROI + self._numVerticalROI:
         # Should throw exception, incorrect line data
@@ -47,9 +49,9 @@ class csvWriter:
         
     
     def writeImage(self, image):
-      """
-      Saves an image to the logs.
-      :param image: nparray containing image data to be saved.
+      """Saves an image to the logs.
+        Args:
+          image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
       imageName = r'logs/images/'+ 'frame' + timestr + '.png' 

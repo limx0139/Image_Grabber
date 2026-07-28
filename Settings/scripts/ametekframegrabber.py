@@ -88,6 +88,14 @@ class ConnectLANDDialogue:
 # Exported (and adapted to python) DeviceAPI. 
 class Device:
     def __init__(self, DeviceAPI):
+        """
+            Initialise parameters
+        Args:
+            DeviceAPI (_type_): DeviceAPI discovered by the ConnectLandDialogue class
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+        """
         # DeviceAPI for selected device
         self._connectedDevice = DeviceAPI
         # Threading lock (mutex) to sync the frame grabbing and image processing threads
@@ -100,7 +108,7 @@ class Device:
         if self._connectedDevice is not None:
             self._connectedDevice.ThermalFrameAvailable += self.onFrame
         else:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
         self._supportsProfiles = bool(self._connectedDevice.SupportsProfiles)
         if self._supportsProfiles:
             self._profileCount = self.getProfileCount()
@@ -119,6 +127,14 @@ class Device:
 
         
     def setColorPalette(self, choice):
+        """
+            Change the current colour palette
+        Args:
+            Choice (Enum.Palette): Palette enum encoding the choice of colour palette to use.
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+        """
         temp = None
         match choice:
             case Palette.Palette1:
@@ -137,27 +153,38 @@ class Device:
         if self._connectedDevice is not None:
             self._connectedDevice.ColorPalette.SelectedPalette = temp
         else:
-            raise Exception("Error: Device not Connected")
-        # return self._connectedDevice.ColorPalette.Palette
+            raise Exception("ConnectionError: Device not Connected")
 
     def startStreaming(self):
+        """Starts the camera, this starts a background thread firing events telling the main thread that thermal frames are available.
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+        """
         if self._connectedDevice is not None:
             self._connectedDevice.StartStreaming()
         else:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
     def stopStreaming(self):
         if self._connectedDevice is not None:
             self._connectedDevice.StopStreaming()
         else:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
     def disconnect(self):
         if self._connectedDevice is not None:
             self._connectedDevice.ThermalFrameAvailable -= self.onFrame
             self._connectedDevice.Disconnect()
         else:
-            raise Exception("Error: Device not Connected")
-    def onFrame(self, source, args):
+            raise Exception("ConnectionError: Device not Connected")
         
+    def onFrame(self, source, args):
+        """Function subscribed to ThermalFrameAvailable in the LandImagerSDK. 
+        Updates the thermal frame data and sets an event to tell the other threads that a new frame is available.
+
+        Args:
+            source (_type_): _description_
+            args (_type_): _description_
+        """
         with self._frame_event_lock:
             # Store a copy of the event to be processed in the main thread. The provided event object is reused
             # by the SDK once the callback returns.
@@ -166,6 +193,17 @@ class Device:
             
         
     def getActiveProfile(self):
+        """Get array index of current profile.
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+
+        Returns:
+            int: Active Profile
+        """
         if self._connectedDevice is not None:
             response = Response(self._connectedDevice.GetActiveProfile())
             Code = response._responseCode
@@ -173,9 +211,20 @@ class Device:
                 raise Exception(Code)
             return response._value 
         else:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
 
     def getProfileCount(self):
+        """Get total number of profiles supported by device.
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+
+        Returns:
+            int: Number of Profiles
+        """
         if self._connectedDevice is not None:
             response = Response(self._connectedDevice.GetProfileCount())
             Code = response._responseCode
@@ -186,15 +235,29 @@ class Device:
             raise Exception("Error: Device not Connected")
         
     def setActiveProfile(self, profile):
+        """Set current profile mode. Disconnects device afterwards, destroying the device class.
+
+        Args:
+            profile (int): Array index of profile to change
+
+        Raises:
+            Exception: InputError: Invalid Input
+            Exception: ConnectionError: Device not Connected
+            Exception: InputError: Profiles not Supported on this Device
+            Exception: InputError: Device does not Support Input Profile
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+        """
         if not isinstance(profile, int):
-            raise Exception("Error: Invalid Input")
+            raise Exception("InputError: Invalid Input")
         if self._connectedDevice is None:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
         if not self._supportsProfiles:
-            raise Exception("Error: Profiles not Supported on this Device")
+            raise Exception("InputError: Profiles not Supported on this Device")
         profileCount = self._profileCount
         if profile < 0 or profile >= profileCount:
-            raise Exception("Error: Device does not Support Input Profile")
+            raise Exception("InputError: Device does not Support Input Profile")
         try:
             responseCode = self._connectedDevice.SetActiveProfile(Int32(profile))
             response = Response(None)
@@ -207,6 +270,17 @@ class Device:
 
 
     def getProfileNames(self):
+        """Get an array of profile names supported by the device.
+
+        Raises:
+            Exception: "ConnectionError: Device not Connected"
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+
+        Returns:
+            [string]: Array of strings describing each profile.
+        """
         if self._connectedDevice is not None:
             response = Response(self._connectedDevice.GetProfileNames())
             Code = response._responseCode
@@ -217,9 +291,17 @@ class Device:
                 result.append(response._value[i])
             return result
         else:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
         
     def getTemperatureRange(self):
+        """Gets the temperature range of the current profile of the camera
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+
+        Returns:
+            [int, int]: Minimum and maximum temperature
+        """
         if self._connectedDevice is not None:
             temperatureRange = self._connectedDevice.GetTemperatureRange()
             result= []
@@ -227,13 +309,26 @@ class Device:
                 result.append(temperatureRange[i])
             return result
         else:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
         
     def adjustFocus(self, focusType, position):
+        """Adjusts the focus of the Device
+
+        Args:
+            focusType (FocusAdjustment): Enum class containing MoveIn, MoveOUt and SetToValue
+            position (int): The value to be set if focusType is passed as SetToValue
+
+        Raises:
+            Exception: ConnectionError: Device not Connected
+            Exception: TypeError: Expected Enum FocusAdjustment type
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+        """
         if self._connectedDevice is None:
-            raise Exception("Error: Device not Connected")
+            raise Exception("ConnectionError: Device not Connected")
         if not isinstance(focusType, FocusAdjustment):
-            raise Exception("TypeError: 1st Argument")
+            raise Exception("TypeError: Expected Enum FocusAdjustment type")
         match focusType:
             case FocusAdjustment.MoveIn:
                 convertedFocusType = li.Enums.FocusAdjustment.MoveIn
@@ -243,7 +338,6 @@ class Device:
                 convertedFocusType = li.Enums.FocusAdjustment.SetToValue
             case _:
                 raise TypeError
-        print(self.getFocusPosition())
         try:
             responseCode = self._connectedDevice.AdjustFocus(convertedFocusType, UInt32(position))
             response = Response(None)
@@ -254,8 +348,19 @@ class Device:
             raise Exception(response._responseCode)
         
     def getFocusPosition(self):
+        """Get the current focus position. Does not seem to be supported by LWIR640 model.
+
+        Raises:
+            ConnectionError: "Device not Connected"
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+
+        Returns:
+            int: Focus position
+        """
         if self._connectedDevice is None:
-            raise Exception("Error: Device not Connected")
+            raise ConnectionError("Device not Connected")
         response = Response(self._connectedDevice.GetFocusPosition())
         Code = response._responseCode
         if Code is not ResponseCode.Success:
@@ -263,8 +368,19 @@ class Device:
         else:
             return response._value
     def setAutoTargetFocus(self, distance):
+        """Set Focus position based on distance. Not Supported by the LWIR640 model, will throw Not Supported Error.
+
+        Args:
+            distance (int): Distance from target in metres.
+
+        Raises:
+            ConnectionError: Device not Connected
+            Exception: Response: Disconnected
+            Exception: Response: Error
+            Exception: Response: Not Supported
+        """
         if self._connectedDevice is None:
-            raise Exception("Error: Device not Connected")
+            raise ConnectionError("Device not Connected")
         try:
             responseCode = self._connectedDevice.SetAutoTargetFocus(Double(distance))
             response = Response(None)
@@ -275,7 +391,14 @@ class Device:
             raise Exception(response._responseCode)
         
 class Response:
+    """Response class returned by functions to the camera API. Directly ported from the LandImagerSDK.
+    """
     def __init__(self, response):
+        """Initialise a response
+
+        Args:
+            response (ResposeCode): Diconeected, Error, NotSupported or Success.
+        """
         if response is not None:
             match response.Code:
                 case li.Enums.ResponseCode.Disconnected:
@@ -291,6 +414,15 @@ class Response:
             self._value = response.Value
     @classmethod
     def fromResponseCode(cls, responseCode, value):
+        """Makes a Respose Class from just the ResponseCode enum alone.
+
+        Args:
+            response (ResposeCode): Diconeected, Error, NotSupported or Success.
+            value (_type_): Value passed by the DeviceAPI
+
+        Raises:
+            TypeError: Invalid Response Code
+        """
         match responseCode:
             case li.Enums.ResponseCode.Disconnected:
                 cls._responseCode = ResponseCode.Disconnected 
@@ -309,7 +441,15 @@ class Response:
 
 # Exported (and adapted to python) ThermalFrame. 
 class ThermalFrame:
+    """A direct to python port of the proprietory thermal frame data generated by the thermal camera, with datatypes ported to python as appropriate. 
+    This class is called every time a thermal frame is generated by the camera.
+    """
     def __init__(self, ThermalFrame):
+        """Initialise a ThermalFrame. Converts and stores all information encoded to a python readable format.
+
+        Args:
+            ThermalFrame (_type_): Proprietary datatype representing a thermal frame from the LandImagerSDK
+        """
         self._frame = ThermalFrame
         self._backgroundTemp = ThermalFrame.BackgroundTemp
         self._emissivity = ThermalFrame.Emissivity
@@ -322,6 +462,11 @@ class ThermalFrame:
         self._tempData = np.frombuffer(ThermalFrame.TemperatureData, dtype=np.float32).reshape(self._height, self._width, 1)
         self._image = np.frombuffer(bytes(ThermalFrame.GetTemperatureBitmap().PixelData), dtype=np.uint8).reshape(self._height, self._width, 4)
     def clone(self):
+        """Clones a Thermal Frame
+
+        Returns:
+            ThermalFrame: _description_
+        """
         return ThermalFrame(self)
     
     

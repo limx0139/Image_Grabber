@@ -1,4 +1,4 @@
-# Image Grabber With Geometry Measurements and Settings
+# Image Grabber with Geometry Measurements and Settings
 
 This is a Python script used to extract the thermal frame data from Ametek thermal cameras using the LandImagerSDK. Essential classes concerning device connection and thermal frame data are implemented in Python, abstracting away from the original C# implementation of the SDK (albeit probably at some cost to performance). The Geometry directory contains the scripts to run geometry measurements, opcua logging, and csv dumping and the Settings directory contains scripts to change the mode(Profile), colour palette and focus of the camera. The barebones package containing only the python port of the LandImagerSDK is contained in the lib directory. Currently, scripts are run on the command line, though a GUI may be in the works. To run the scripts, navigate to the directories the scripts are located in and run them with the appropriate arguments. For example, to change the Profile of a camera, navigate to the Settings directory and run:
 ```bash
@@ -6,8 +6,11 @@ python changeProfile "yourCameraIPAddress" profileNumber
 ```
 Details on script arguments can be found later in the documentation.
 
+This program is written for Windows and while the python scripts may work for other platforms, some other aspects may not port over as easily.
+
 ## Dependencies
 
+### Using a Virtual Environment
 It is recommended to use virtual environments with python dependencies to prevent issues down the line with conflicting python packages. The [Official Python Documentation](https://docs.python.org/3/library/venv.html) has all the information on virtual environments and how to set them up, but all we need to know is to run the following commands in the main directory of this repository:
 
 
@@ -31,7 +34,11 @@ A virtual environment has been created in the remote desktop at AFRC future forg
 ```bash
 C:\Users\Administrator\Documents\geometryMeasurementSourceCode\Image_Grabber-main\
 ```
+To remove a virtual environment, simply delete the virtual environment directory.
 
+
+
+### Installation
 
 Versions provided are ones used to write the script. Other versions may also work. LandImagerSDK.dll assembly SDK provided by Ametek.
 | Dependency        | Version | 
@@ -43,19 +50,23 @@ Versions provided are ones used to write the script. Other versions may also wor
 | matplotlib        | 3.11.0  |
 | LandImagerSDK.dll | nil     |
 
-# Installation
-
-If running on a virtual environment, this commands should be run within the virtual environment.
+If running on a virtual environment, installation commands should be run within the virtual environment. It is also possible to install all dependencies under the main python path, in which case, the dependencies are just installed, skipping the instructions for setting up virtual environments.
 ```bash
 python -m pip install pythonnet numpy cv2 matplotlib
 ```
-The LandImagerSDK.dll should be provided by the Ametek LAND SDK. This assumes a suitable version of Python, numpy and cv2 are also installed.
+The LandImagerSDK.dll can be found on the [Official Ametek website](https://www.ametek-land.com/products/software/imagersdk), though it is also included in this repository. As per the specifications on the official LandImagerSDK documentation, this file needs to be in the base directory for any program with it as a dependency. e.g. Settings has the LandImagerSDK.dll within its directory. 
 
-## Usage
+Depending on the security configurations of the machine running the program, the LandImagerSDK.dll may be flagged as potentially malicious as a unknown assembly dll script. To work around this, ensure that the 'LandImagerSDK.dll' is legitimate, then navigate to it in folders, right click it and select properties. ....
+# TODO, make troubleshooting page
+
+
+
+## Base Image Grabber Usage
+The image grabber can be accessed through the amatekframegrabber.py API, which is itself a (albeit incomplete at the moment) python port of the LandImagerSDK.dll. 
 Ensure all dependencies are installed and the 'LandImagerSDK.dll' file is in the working directory.
 While there are a variety of different ways to import the package to your python project, by far, the most straightforward way to do so is to have the sourcecode 'ametekframegrabber.py' and the assembly SDK 'LandImagerSDL.dll' in your working directory. This will allow the script to be accessible to the python intepreter, allowing direct access to the script by calling the following import:
 ```python
-import amatekframegrabber as lfg
+import amatekframegrabber as fg
 ```
 ### Connect Function
 ```python
@@ -66,7 +77,35 @@ import amatekframegrabber as lfg
     # which then falls out of scope within the function call.
 connectedDevice = lfg.connect(IPAddress)
 ```
+### Enums
+Several Enum classes are packaged within the python port, mostly as a direct port from the proprietory datatypes in the LandImagerSDK itself.
+```python
+# The Colour palette mode used by the camera. The SDK allows for more fine tuning of the colour palette, it is likely easier to manipulate the colour bitmap directly using opencv in python.
+class Palette(Enum):
+    # Grayscale palette
+    Palette1 = 1
+    # Blue to Yellow Palette
+    Palette2 = 2
+    # Purple to Yellow Palette
+    Palette3 = 3
+    # Red to Yellow Palette
+    Palette4 = 4
+    # High Contrast Palette
+    Palette5 = 5
 
+# A port for the proprietory response codes used by the LandImagerSDK. Most functions sending instructions and receiving information to a camera receive a response function containing a value and a response code indicating the result of the function. This enum ports the response code enum class to python.
+class ResponseCode(Enum):
+    Disconnected = 1
+    Error = 2
+    NotSupported = 3
+    Success = 4
+
+# Instructions to send to the camera to adjust focus.
+class FocusAdjustment(Enum):
+    MoveIn = 1
+    MoveOut = 2
+    SettoValue = 3
+```
 ### Device Class
 A device class object is used to connect to the camera. This is functionally a boiled down version of DeviceAPI in the SDK documentation, with functions for connection, streaming, and capturing thermal data ported over to Python.
 ```python
@@ -84,6 +123,15 @@ A device class object is used to connect to the camera. This is functionally a b
     Device._frame_event         = None
     # Event to alert listening functions whenever a Thermal Frame is available
     Device._frame_availale = threading.Event()
+    # Boolean data to indicate if the device supports profiles
+    Device._supportsProfiles = bool(self._connectedDevice.SupportsProfiles)
+    # If the device supports profile(modes), the following parameters will be active
+        # The number of profiles the device supports
+        Device._profileCount = int(self.getProfileCount())
+        # The names of the profiles, stored as a array of strings
+        Device._profileNames = self.getProfileNames()
+        # The current profile
+        Device._activeProfile = self.getActiveProfile()
 
 # Functions
     # Choose a colour pallate. 
@@ -143,7 +191,7 @@ This class contains all the information extracted from each frame of the camera,
 
 
 ### Example Functions
-Here are some premade example functions provided to be called directed from the sourcecode:
+Here are some premade example functions provided to be called directed:
 
 ```python
 # Show the camera display of a connected camera.
@@ -157,12 +205,34 @@ showFrames(Device)
 # This function is a combination of lfg.connect and showFrames, with the endpoints connected as is appropriate
 streamFrame(IPAddress, palette)
 ```
-## Notes on threading
-This script uses a background thread to receive thermal frames from the camera API. This is necessary as the camera API itself uses a background thread to run the camera, hence, the script integrates said background thread to receive the necessary information. As such, errors will be prone to occur if the threads are not properly synced. In the example code provided, an instance of proper thread syncing is shown.
 
-## Example code
+### Example code
 An example, in example1, is provided showing how to use to API to connect a camera at port 10.1.10.102, and access its thermal frames to draw the coordinates of maximum and minimum temperature. The area of code where each thermal frame is available to be manipulated and saved is indicated.
 
+
+### Notes on threading
+This script uses a background thread to receive thermal frames from the camera API. This is necessary as the camera API itself uses a background thread to run the camera, hence, the script integrates said background thread to receive the necessary information. As such, errors will be prone to occur if the threads are not properly synced. In the example code provided, an instance of proper thread syncing is shown.
+
+## Geometry Measurer Usage
+The scripts in the Geometry folder build a program used to measure the lengths at various Regions of Interest of a hot object assumed to be roughly parallel to the plane of the camera.
+### Quick Start
+The script is rigged to run out of the box with the main.py function, which handles the main working thread of the program. Ensure all dependencies are installed, navigate to the Geometry directory and run main.py:
+```bash
+python main.py
+```
+This runs the Geometry measurer algorithm on default arguments:
+| Argument               | Value                                    | 
+| --------               | -------                                  | 
+| ipAddress              | 10.1.10.102                              | 
+| opcuaServerEndpoint    | opc.tcp://0.0.0.0:5555/freeopcua/server/ |
+| numberOfVerticalROIs   | 10                                       |
+| numberOfHorizontalROIs | 5                                        |
+| pixelConversion        | 1                                        |
+| units                  | Pixels                                   |
+
+If successful, we should get the following window:
+## Settings Usage
+The scripts in the Settings folder allow for changing the base settings of the Ametek camera connected.
 ## Contributing
 
 

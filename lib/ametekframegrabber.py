@@ -5,6 +5,8 @@ import cv2
 import numpy as np
 import os
 from enum import Enum
+from System import String, Boolean, Array, Int32, UInt32, Double
+
 # Finds the directory of the LandImagerSDK.dll, which should be in the same directory as the script
 cwd = os.getcwd()
 assemblyLocation = cwd+"\\LandImagerSDK.dll"
@@ -22,6 +24,20 @@ class Palette(Enum):
     Palette3 = 3
     Palette4 = 4
     Palette5 = 5
+
+class ResponseCode(Enum):
+        
+    Disconnected = 1
+    Error = 2
+    NotSupported = 3
+    Success = 4
+    
+class FocusAdjustment(Enum):
+    MoveIn = 1
+    MoveOut = 2
+    SettoValue = 3
+
+        
     
 # Class that handles connection to the Ametek Camera
 class ConnectLANDDialogue:
@@ -84,14 +100,23 @@ class Device:
         if self._connectedDevice is not None:
             self._connectedDevice.ThermalFrameAvailable += self.onFrame
         else:
-            self = None
+            raise Exception("Error: Device not Connected")
+        self._supportsProfiles = bool(self._connectedDevice.SupportsProfiles)
+        if self._supportsProfiles:
+            self._profileCount = self.getProfileCount()
+            self._profileNames = self.getProfileNames()
+            self._activeProfile = self.getActiveProfile()
+
+        
     
     def __del__(self):
         """
         Destructor.
         """
         # Ensure the client removes itself before destruction to avoid memory access issues
-        self._connectedDevice.Disconnect()
+        if self._connectedDevice is not None:
+            self._connectedDevice.Disconnect()
+
         
     def setColorPalette(self, choice):
         temp = None
@@ -109,19 +134,28 @@ class Device:
             case _:
                 # Invalid Palette
                 return
-        self._connectedDevice.ColorPalette.SelectedPalette = temp
+        if self._connectedDevice is not None:
+            self._connectedDevice.ColorPalette.SelectedPalette = temp
+        else:
+            raise Exception("Error: Device not Connected")
         # return self._connectedDevice.ColorPalette.Palette
 
     def startStreaming(self):
         if self._connectedDevice is not None:
             self._connectedDevice.StartStreaming()
+        else:
+            raise Exception("Error: Device not Connected")
     def stopStreaming(self):
         if self._connectedDevice is not None:
             self._connectedDevice.StopStreaming()
+        else:
+            raise Exception("Error: Device not Connected")
     def disconnect(self):
         if self._connectedDevice is not None:
             self._connectedDevice.ThermalFrameAvailable -= self.onFrame
             self._connectedDevice.Disconnect()
+        else:
+            raise Exception("Error: Device not Connected")
     def onFrame(self, source, args):
         
         with self._frame_event_lock:
@@ -129,7 +163,148 @@ class Device:
             # by the SDK once the callback returns.
             self._frame_event = args.ThermalFrame.Clone()
             self._frame_availale.set()
-    
+            
+        
+    def getActiveProfile(self):
+        if self._connectedDevice is not None:
+            response = Response(self._connectedDevice.GetActiveProfile())
+            Code = response._responseCode
+            if Code is not ResponseCode.Success:
+                raise Exception(Code)
+            return response._value 
+        else:
+            raise Exception("Error: Device not Connected")
+
+    def getProfileCount(self):
+        if self._connectedDevice is not None:
+            response = Response(self._connectedDevice.GetProfileCount())
+            Code = response._responseCode
+            if Code is not ResponseCode.Success:
+                raise Exception(Code)
+            return response._value 
+        else:
+            raise Exception("Error: Device not Connected")
+        
+    def setActiveProfile(self, profile):
+        if not isinstance(profile, int):
+            raise Exception("Error: Invalid Input")
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        if not self._supportsProfiles:
+            raise Exception("Error: Profiles not Supported on this Device")
+        profileCount = self._profileCount
+        if profile < 0 or profile >= profileCount:
+            raise Exception("Error: Device does not Support Input Profile")
+        try:
+            responseCode = self._connectedDevice.SetActiveProfile(Int32(profile))
+            response = Response(None)
+            response.fromResponseCode(responseCode, None)
+        except Exception as ex:
+            raise ex
+        if response._responseCode is not ResponseCode.Success:
+            raise Exception(response._responseCode)
+
+
+
+    def getProfileNames(self):
+        if self._connectedDevice is not None:
+            response = Response(self._connectedDevice.GetProfileNames())
+            Code = response._responseCode
+            if Code is not ResponseCode.Success:
+                raise Exception(Code)
+            result = []
+            for i in range(len(response._value)):
+                result.append(response._value[i])
+            return result
+        else:
+            raise Exception("Error: Device not Connected")
+        
+    def getTemperatureRange(self):
+        if self._connectedDevice is not None:
+            temperatureRange = self._connectedDevice.GetTemperatureRange()
+            result= []
+            for i in range(len(temperatureRange)):
+                result.append(temperatureRange[i])
+            return result
+        else:
+            raise Exception("Error: Device not Connected")
+        
+    def adjustFocus(self, focusType, position):
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        if not isinstance(focusType, FocusAdjustment):
+            raise Exception("TypeError: 1st Argument")
+        match focusType:
+            case FocusAdjustment.MoveIn:
+                convertedFocusType = li.Enums.FocusAdjustment.MoveIn
+            case FocusAdjustment.MoveOut:
+                convertedFocusType = li.Enums.FocusAdjustment.MoveOut
+            case FocusAdjustment.SettoValue:
+                convertedFocusType = li.Enums.FocusAdjustment.SetToValue
+            case _:
+                raise TypeError
+        print(self.getFocusPosition())
+        try:
+            responseCode = self._connectedDevice.AdjustFocus(convertedFocusType, UInt32(position))
+            response = Response(None)
+            response.fromResponseCode(responseCode, None)
+        except Exception as ex:
+            raise ex
+        if response._responseCode is not ResponseCode.Success:
+            raise Exception(response._responseCode)
+        
+    def getFocusPosition(self):
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        response = Response(self._connectedDevice.GetFocusPosition())
+        Code = response._responseCode
+        if Code is not ResponseCode.Success:
+            raise Exception(Code)
+        else:
+            return response._value
+    def setAutoTargetFocus(self, distance):
+        if self._connectedDevice is None:
+            raise Exception("Error: Device not Connected")
+        try:
+            responseCode = self._connectedDevice.SetAutoTargetFocus(Double(distance))
+            response = Response(None)
+            response.fromResponseCode(responseCode, None)
+        except Exception as ex:
+            raise ex
+        if response._responseCode is not ResponseCode.Success:
+            raise Exception(response._responseCode)
+        
+class Response:
+    def __init__(self, response):
+        if response is not None:
+            match response.Code:
+                case li.Enums.ResponseCode.Disconnected:
+                    self._responseCode = ResponseCode.Disconnected 
+                case li.Enums.ResponseCode.Error:
+                    self._responseCode = ResponseCode.Error 
+                case li.Enums.ResponseCode.NotSupported:
+                    self._responseCode = ResponseCode.NotSupported 
+                case li.Enums.ResponseCode.Success:
+                    self._responseCode = ResponseCode.Success 
+                case _:
+                    self._responseCode = None
+            self._value = response.Value
+    @classmethod
+    def fromResponseCode(cls, responseCode, value):
+        match responseCode:
+            case li.Enums.ResponseCode.Disconnected:
+                cls._responseCode = ResponseCode.Disconnected 
+            case li.Enums.ResponseCode.Error:
+                cls._responseCode = ResponseCode.Error 
+            case li.Enums.ResponseCode.NotSupported:
+                cls._responseCode = ResponseCode.NotSupported 
+            case li.Enums.ResponseCode.Success:
+                cls._responseCode = ResponseCode.Success 
+            case _:
+                raise TypeError
+        cls._value = value
+
+
 
 
 # Exported (and adapted to python) ThermalFrame. 
@@ -158,18 +333,17 @@ def connect(IPAddress):
     connection = ConnectLANDDialogue()
     connection.discoverDevices()
     if len(connection._discoveredDevices) == 0:
-        print("No devices found")
-        return
+        raise Exception("Error: No Cameras Founds")
     connection.connectDevice(IPAddress)
     if connection._connectedDevice is not None:
         print("Connection Success")
     else:
-        print("Connection Failed")
+        raise Exception("Error: Connection to Camera Failed.")
     return connection._connectedDevice
 
 # Connects to the camera and directly streams it using cv2
 # Choose from 5 colour palettes
-def streamFrame(IPAddress, palette):
+def changePalette(IPAddress, palette):
     """
     Main entry point.
     """
@@ -212,4 +386,4 @@ def showFrames(Device):
     Device.disconnect()
 
 if __name__ == "__main__":
-    streamFrame("10.1.10.102", Palette.Palette1)
+    changePalette("10.1.10.102", Palette.Palette1)

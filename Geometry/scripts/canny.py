@@ -3,12 +3,16 @@ import numpy as np
 import argparse
 import glob
 import cv2
-def auto_canny(image, sigma=5, blurIndex = 5):
-    """
-    Generates edges using the Canny edge detection algorithm with automatic thresholding based on the median of the pixel intensities.
-    :param image: Input image (grayscale).
-    :param sigma: THresholding parameter. Default is 0.33.
-    :return: Edged image.
+def auto_canny(image, sigma=0.33, blurIndex = 5):
+    """Runs canny edge detection algorithm with a Gaussian blur and automatically chosen upper and lower bounds and.
+
+    Args:
+        image (cv2.UMAT): Array containing image data.
+        sigma (int, optional): The distance between upper and lower bounds of the canny algorithm. Defaults to 0.33.
+        blurIndex (odd int, optional): The degree of Gaussian blur to apply. Defaults to 5.
+
+    Returns:
+        cv2.UMAT: Array containing image data with canny algorithm
     """
 	# compute the median of the single channel pixel intensities
     v = np.median(image)
@@ -21,12 +25,16 @@ def auto_canny(image, sigma=5, blurIndex = 5):
     return edged
 
 def removeReflection(gray, reflection_index):
+    """Removes reflections from the gray-scale image based on the reflection index. Uses the reflective index as a threshold to remove all data below it.
+    Args:
+        image (cv2.UMAT): Input image (grayscale).
+        reflection_index (float): The reflective index of the material. 0.9 seems to work the best for the reflective material in the forge.
+        blurIndex (odd int, optional): The degree of Gaussian blur to apply. Defaults to 5.
+
+    Returns:
+        cv2.UMAT: image with reflections removed.
     """
-    Removes reflections from the gray-scale image based on the reflection index. Uses the reflective index as a threshold to remove all data below it.
-    :param image: Input image (grayscale).
-    :param reflection_index: The reflective index of the material. 0.9 seems to work the best for the reflective material in the forge.
-    :return: image with reflections removed.
-    """
+
     max_value = np.max(gray)
     threshold_value = reflection_index * max_value
     # Apply a threshold to create a binary mask of the reflections
