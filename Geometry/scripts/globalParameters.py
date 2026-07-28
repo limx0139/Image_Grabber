@@ -2,17 +2,25 @@ from enum import Enum
 
 import cv2
 
-
+#COLOURS
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED   = (0, 0, 255)
 GREEN = (0, 255, 0)
 BLUE  = (255, 0, 0)
+#FONT
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
-
+#FRAMEDATA
 Frame_WIDTH = 640
 Frame_HEIGHT = 480
-
+#CAMERA AND SERVER PARAMETERS
+IP_ADDRESS = '10.1.10.102'
+SERVER_ENDPOINT = "opc.tcp://0.0.0.0:5555/freeopcua/server/"
+#CANNY PARAMETERS
+CANNY_SIGMA = 0.33
+GAUSSIAN_BLUR_INDEX = 5
+REFLECTIVE_INDEX = 0.9
+#ENUMS
 class Unit(Enum):
     PIXELS = 1
     MM = 2

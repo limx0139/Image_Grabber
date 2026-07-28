@@ -8,6 +8,12 @@ Details on script arguments can be found later in the documentation.
 
 This program is written for Windows and while the python scripts may work for other platforms, some other aspects may not port over as easily.
 
+
+# Contents
+ - [Dependencies](#dependencies) 
+ - [Base Image Grabber Usage](#base-image-grabber-usage) 
+ - [Base Image Grabber Usage](#base-image-grabber-usage) 
+
 ## Dependencies
 
 ### Using a Virtual Environment
@@ -214,8 +220,8 @@ An example, in example1, is provided showing how to use to API to connect a came
 This script uses a background thread to receive thermal frames from the camera API. This is necessary as the camera API itself uses a background thread to run the camera, hence, the script integrates said background thread to receive the necessary information. As such, errors will be prone to occur if the threads are not properly synced. In the example code provided, an instance of proper thread syncing is shown.
 
 ## Geometry Measurer Usage
-The scripts in the Geometry folder build a program used to measure the lengths at various Regions of Interest of a hot object assumed to be roughly parallel to the plane of the camera.
-### Quick Start
+The scripts in the Geometry folder build a program used to measure the lengths at various Regions of Interest of a hot object assumed to be roughly parallel to the plane of the camera, broadcasting this information as a OPCUA server and logging the information in a csv dump file located in \Geometry\logs.
+#### Quick Start
 The script is rigged to run out of the box with the main.py function, which handles the main working thread of the program. Ensure all dependencies are installed, navigate to the Geometry directory and run main.py:
 ```bash
 python main.py
@@ -231,6 +237,14 @@ This runs the Geometry measurer algorithm on default arguments:
 | units                  | Pixels                                   |
 
 If successful, we should get the following window:
+![Default Window](documentation\DefaultWindow.png "Default Window")
+
+Ensure no errors appear on the command line, as errors may appear without the software crashing when they are raised by supporting threads. Errors may indicate the OPCUA server failing to boot. Do refer to the [Troubleshooting section](#troubleshooting) to resolve common errors.
+
+#### Run with parameters
+The program also supports running with custom parameters through the command line. 
+### Troubleshooting
+### Development
 ## Settings Usage
 The scripts in the Settings folder allow for changing the base settings of the Ametek camera connected.
 ## Contributing

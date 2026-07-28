@@ -16,7 +16,7 @@ from scripts.draw import drawHorizontalLineandValue, drawHorizontalROI, drawVert
 from scripts.geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
 import scripts.ametekframegrabber as fg
 from scripts.canny import auto_canny, removeReflection
-import scripts.enums as enums
+import scripts.globalParameters as enums
 
 
     

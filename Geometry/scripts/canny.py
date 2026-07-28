@@ -3,7 +3,8 @@ import numpy as np
 import argparse
 import glob
 import cv2
-def auto_canny(image, sigma=0.33, blurIndex = 5):
+from scripts.globalParameters import CANNY_SIGMA, GAUSSIAN_BLUR_INDEX, REFLECTIVE_INDEX
+def auto_canny(image, sigma=CANNY_SIGMA, blurIndex = GAUSSIAN_BLUR_INDEX):
     """Runs canny edge detection algorithm with a Gaussian blur and automatically chosen upper and lower bounds and.
 
     Args:
@@ -24,7 +25,7 @@ def auto_canny(image, sigma=0.33, blurIndex = 5):
 	# return the edged image
     return edged
 
-def removeReflection(gray, reflection_index):
+def removeReflection(gray, reflection_index= REFLECTIVE_INDEX):
     """Removes reflections from the gray-scale image based on the reflection index. Uses the reflective index as a threshold to remove all data below it.
     Args:
         image (cv2.UMAT): Input image (grayscale).

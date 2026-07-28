@@ -3,7 +3,7 @@ import math
 
 import cv2
 
-from scripts.enums import Unit
+from scripts.globalParameters import Unit
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SIZE = 0.4
 WHITE = (255,255,255)
