@@ -1,4 +1,4 @@
-# Example Script to draw max and min temperature onto the image using opencv2
+# Reads from a videofile instead of directly from the camera
 
 from asyncio import graph
 import sys
