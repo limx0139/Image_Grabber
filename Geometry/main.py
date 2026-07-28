@@ -10,14 +10,13 @@ import time
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
-from plotFuncs import initPlot, updatePlot
-from csvDumper import csvWriter
-from opcua_server import startServer
-from draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLineandValue, drawVerticalROI
-from geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
-import ametekframegrabber as fg
-from canny import auto_canny, removeReflection
-import enums
+from scripts.csvDumper import csvWriter
+from scripts.opcua_server import startServer
+from scripts.draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLineandValue, drawVerticalROI
+from scripts.geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
+import scripts.ametekframegrabber as fg
+from scripts.canny import auto_canny, removeReflection
+import scripts.enums as enums
 
 
     

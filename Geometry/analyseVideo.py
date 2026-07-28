@@ -7,10 +7,10 @@ import sys
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
-from draw import drawVerticalLineandValue, drawVerticalROI
-from geometryMeasurement import measureVerticalGeometry
-import ametekframegrabber as fg
-from canny import auto_canny, removeReflection
+from scripts.draw import drawVerticalLineandValue, drawVerticalROI
+from scripts.geometryMeasurement import measureVerticalGeometry
+import scripts.ametekframegrabber as fg
+from scripts.canny import auto_canny, removeReflection
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)

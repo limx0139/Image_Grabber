@@ -4,7 +4,7 @@ import logging
 import time
 from asyncua import Server, ua
 
-from enums import Unit
+from scripts.enums import Unit
 
 
 
