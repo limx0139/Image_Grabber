@@ -237,12 +237,40 @@ This runs the Geometry measurer algorithm on default arguments:
 | units                  | Pixels                                   |
 
 If successful, we should get the following window:
-![Default Window](documentation\DefaultWindow.png "Default Window")
 
+<p align="center">
+<img src="documentation\DefaultWindow.png " alt="Default Window" width="600"/>
+</p>
+
+Do note that this example has the camera pointed at nothing, so the it is only displaying the ambient temperature. 
+Moreover, note the lines displaying the locations of the 10 vertical ROIs and 5 horizontal ROIs.
 Ensure no errors appear on the command line, as errors may appear without the software crashing when they are raised by supporting threads. Errors may indicate the OPCUA server failing to boot. Do refer to the [Troubleshooting section](#troubleshooting) to resolve common errors.
+
 
 #### Run with parameters
 The program also supports running with custom parameters through the command line. 
+
+```bash
+# python main.py ipAddress opcuaServerEndpoint numberOfVerticalROIs numberOfHorizontalROIs pixelConversion units
+# All arguments must be inputted in the right order, with the right type for the program to run.
+# Errors will be thrown for incorrect input.
+# The below example shows the parameters confligures as:
+# IP Address: 10.1.10.102
+# Server Endpoint: opc.tcp://0.0.0.0:5555/freeopcua/server/
+# Number of Vertical ROIs: 10
+# Number of Horizontal ROIs: 5
+# Pixel Conversion rate: 5
+# Unit measurement: MM
+    # Unit measurement accepts cm, mm, pixels and will throw an error for other inputs.
+python main.py 10.1.10.102 opc.tcp://0.0.0.0:5555/freeopcua/server/ 10 5 5 mm
+```
+
+Other parameters can be accessed in the file, \Geometry\scripts\globalParameters.:
+
+<p align="center">
+<img src="documentation\GlobalParametersLocation_1.png " alt="Global Parameters Location" width="600"/>
+</p>
+
 ### Troubleshooting
 ### Development
 ## Settings Usage

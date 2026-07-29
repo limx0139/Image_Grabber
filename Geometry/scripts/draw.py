@@ -18,10 +18,14 @@ def drawVerticalROI(image, numVerticalROIs, color = WHITE):
     """
 
     thickness   = 1
-    num_rows, num_cols = image.shape[:2]
-    width = num_cols // numVerticalROIs
-    for x in range(width, num_cols, width):
-        cv2.line(image, (x, 0), (x, num_rows), color, thickness)
+    frameHeight, frameWidth = image.shape[:2]
+    ROIWidth = frameWidth // numVerticalROIs
+    for x in range(ROIWidth, frameWidth, ROIWidth):
+        text = 'ROI'+str(x+1)
+        text_position = (x+ROIWidth//2, 20)
+        cv2.line(image, (x, 0), (x, frameHeight), color, thickness)
+        cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
+
           
 def drawHorizontalROI(image, numHorizontalROIs, color = WHITE):
     """
@@ -32,10 +36,14 @@ def drawHorizontalROI(image, numHorizontalROIs, color = WHITE):
     :return: Edged image.
     """
     thickness   = 1
-    num_rows, num_cols = image.shape[:2]
-    width = num_rows // numHorizontalROIs
-    for x in range(width, num_cols, width):
-        cv2.line(image, (0, x), (num_cols, x), color, thickness)
+    frameHeight, frameWidth = image.shape[:2]
+    ROIWidth = frameHeight // numHorizontalROIs
+    for x in range(ROIWidth, frameWidth, ROIWidth):
+        cv2.line(image, (0, x), (frameWidth, x), color, thickness)
+        text = 'ROI'+str(x+1)
+        text_position = (20, x+ROIWidth//2)
+        cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
+
 
 def drawVerticalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     """
@@ -56,7 +64,7 @@ def drawVerticalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     # Measurement value
     match unit:
         case Unit.PIXELS:
-            units = ' pixels' 
+            units = ' px' 
         case Unit.MM:
             units = 'mm'
         case Unit.CM:
@@ -86,7 +94,7 @@ def drawHorizontalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     # Measurement value
     match unit:
         case Unit.PIXELS:
-            units = ' pixels' 
+            units = ' px' 
         case Unit.MM:
             units = 'mm'
         case Unit.CM:

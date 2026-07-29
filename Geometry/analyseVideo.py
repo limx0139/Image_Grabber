@@ -24,8 +24,7 @@ Frame_HEIGHT = 480
 
 class MainThread:
 
-    def __init__(self, ipAddress, numVerticalROIs, numHorizontalROIs, reflection_index=0.9):
-        self._ipAddress = ipAddress
+    def __init__(self, numVerticalROIs, numHorizontalROIs, reflection_index=0.9):
         self._numVerticalROIs = numVerticalROIs
         self._numHorizontalROIs = numHorizontalROIs
         self._reflection_index = reflection_index        
@@ -70,18 +69,17 @@ class MainThread:
                 cv2.imshow('Canny Edges', edged)
             
                 drawVerticalROI(image, self._numVerticalROIs)
-                print(f"Vertical Geometry: {self._verticalGeometry}")
                 coords = measureVerticalGeometry(self._verticalGeometry, edged, self._numVerticalROIs)
                 currentVerticalGeometry = self._verticalGeometry.copy()  # Make a copy of the current vertical geometry
 
                 
                 for x in range(len(coords)):
-                    # Draw the vertical line and measurement on the image
-                    y1 = coords[x][0]
-                    y2 = coords[x][1]
-                    x_pos = coords[x][2]
-                    if y1 is not None and y2 is not None:  # Only draw if both y1 and y2 are valid
-                        drawVerticalLineandValue(image, (x_pos, y1), (x_pos, y2), BLACK, currentVerticalGeometry[x])
+                    if coords[x] is not None:
+                        # Draw the vertical line and measurement on the image
+                        z1 = coords[x][0]
+                        z2 = coords[x][1]
+                        length = coords[x][2]
+                        drawVerticalLineandValue(image, z1, z2, BLACK, length)
                 cv2.imshow('Frames', image)
             else:   
                 drawVerticalROI(image, self._numVerticalROIs)
@@ -98,19 +96,20 @@ def main():
     """
     # Get the IP address from command line argument
     # With an IP address of 0 the first compatible camera will be chosen
-    ipAddress = "10.1.10.102"
+    videoPath = r'ForgingVideos/video2.mp4'
     if len(sys.argv) >= 2:
-       ipAddress = int(sys.argv[1])
+       videoPath = sys.argv[1]
        return
        client = None
-       
+    numVerticalROIs = 20
+    numHorizontalROIs = 10
     try:
-      client = MainThread(ipAddress, 20, 15)
+      client = MainThread(numVerticalROIs, numHorizontalROIs)
 
     except Exception as ex:
         print(ex)
         return
-    client.run("ForgingVideos/video2.mp4")
+    client.run(videoPath)
 
 
 if __name__ == "__main__":
