@@ -221,7 +221,7 @@ This script uses a background thread to receive thermal frames from the camera A
 
 ## Geometry Measurer Usage
 The scripts in the Geometry folder build a program used to measure the lengths at various Regions of Interest of a hot object assumed to be roughly parallel to the plane of the camera, broadcasting this information as a OPCUA server and logging the information in a csv dump file located in \Geometry\logs.
-#### Quick Start
+### Quick Start
 The script is rigged to run out of the box with the main.py function, which handles the main working thread of the program. Ensure all dependencies are installed, navigate to the Geometry directory and run main.py:
 ```bash
 python main.py
@@ -260,9 +260,13 @@ python analyseVideo.py
 <img src="documentation\AnalyseVideoExample.png " alt="Example Output" width="600"/>
 </p>
 
+You can also add an additional argument to the AnalyseVideo.py script to point to a video file to analyse:
 
+```python
+python analyseVideo.py relative\path\to\video
+```
 
-#### Run with parameters
+### Run with parameters
 The program also supports running with custom parameters through the command line. 
 
 ```bash
@@ -285,6 +289,32 @@ Other parameters can be accessed in the file, \Geometry\scripts\globalParameters
 <p align="center">
 <img src="documentation\GlobalParametersLocation_1.png " alt="Global Parameters Location" width="600"/>
 </p>
+
+Below are the relevant parameters for forging: 
+
+<p align="center">
+<img src="documentation\GlobalParametersDefaults.png " alt="Global Parameters Defaults" width="600"/>
+</p>
+
+| Parameter            | Description                                    | 
+| --------             | -------                                        | 
+| IP_ADDRESS           | IP Address of the camera                       |
+| SERVER_ENDPOINT      | Endpoint for the OPCUA Server                  |  
+| NUM_VERTICAL_ROIS    | Number of Vertical ROIs                        | 
+| NUM_HORIZONTAL_ROIS  | Number of Horizontal ROIs                      | 
+| CHOSEN_UNITS         | Unit of measurement                            | 
+| PIXEL_CONVERSION_RATE| number of said unit per pixel                  |  
+| MAKE_LOGS            | Whether to log data as csv/image dump          |  
+| CANNY_SIGMA          | Canny Algorithm Wideness                       |  
+| GAUSSIAN_BLUR_INDEX  | Degree of Blur for Canny Algorithm (Odd Int)   | 
+| REFLECTIVE_INDEX     | Expected reflectivity of background material   |
+| SENSITIVITY          | Higher sensitivity equals ignore cooler objects| 
+
+Passing in settings in the command line, when applicable will cause the default settings to be overridden.
+
+### Features
+The Geometry Measurer comes with baseline features, those requiring user input during running are 
+
 
 ### Troubleshooting
 ### Development

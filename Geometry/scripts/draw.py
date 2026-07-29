@@ -45,8 +45,8 @@ def drawOverlay(image, recording):
         line_height = cv2.getTextSize(line, FONT_FACE, FONT_SIZE, thickness)[0][1]
         position    = (x, y + i * (line_height + line_margin))
 
-        cv2.putText(image, line, position, FONT_FACE, FONT_SIZE, BLACK, thickness+1, lineType = cv2.LINE_AA)
-        cv2.putText(image, line, position, FONT_FACE, FONT_SIZE, GREEN, thickness, lineType = cv2.LINE_AA)
+        cv2.putText(image, line, position, FONT_FACE, 0.4, BLACK, thickness+1, lineType = cv2.LINE_AA)
+        cv2.putText(image, line, position, FONT_FACE, 0.4, GREEN, thickness, lineType = cv2.LINE_AA)
 
 def drawVerticalROI(image, numVerticalROIs, color = WHITE):
     """
@@ -64,7 +64,7 @@ def drawVerticalROI(image, numVerticalROIs, color = WHITE):
         cv2.line(image, (x, 0), (x, frameHeight), color, thickness)
     for i in range(numVerticalROIs):
         text = 'ROI'+str(i+1)
-        text_position = ((i+1)*ROIWidth+ROIWidth//2- ROIWidth, 20)
+        text_position = ((i+1)*ROIWidth+ROIWidth//3- ROIWidth, 20)
         cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, WHITE, thickness, lineType = cv2.LINE_AA)
  
           

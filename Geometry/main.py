@@ -255,6 +255,7 @@ def main():
     unitEnum = GLOBAL.Unit.PIXELS
     inputVerticalROI = GLOBAL.NUM_VERTICAL_ROIS
     inputHorizontalROI = GLOBAL.NUM_HORIZONTAL_ROIS
+    makeLogs = GLOBAL.MAKE_LOGS
 
     if len(sys.argv) == 7:
         ip = sys.argv[1]
@@ -279,7 +280,7 @@ def main():
     client = None
     
     try:
-      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = inputVerticalROI, numHorizontalROIs = inputHorizontalROI, unit = unitEnum, pixelConversionIndex= pixelConversion)
+      client = MainThread(ipAddress = ip ,serverEndpoint = endpoint, numVerticalROIs = inputVerticalROI, numHorizontalROIs = inputHorizontalROI, csvDump=makeLogs, unit = unitEnum, pixelConversionIndex= pixelConversion)
 
     except Exception as ex:
         raise ex

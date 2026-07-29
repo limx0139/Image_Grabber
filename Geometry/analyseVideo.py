@@ -100,7 +100,8 @@ def main():
     if len(sys.argv) >= 2:
        videoPath = sys.argv[1]
        return
-       client = None
+   
+    client = None
     numVerticalROIs = 20
     numHorizontalROIs = 10
     try:
