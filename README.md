@@ -242,7 +242,13 @@ If successful, we should get the following window:
 <img src="documentation\DefaultWindow.png " alt="Default Window" width="600"/>
 </p>
 
-Do note that this example has the camera pointed at nothing, so the it is only displaying the ambient temperature. 
+Do note that this example has the camera pointed at nothing, so the it is only displaying the ambient temperature. To view the expected output during forging, run the analyseVideo.py file in the same directory. 
+```python
+python analyseVideo.py
+```
+<p align="center">
+<img src="documentation\AnalyseVideoExample.png " alt="Example Output" width="600"/>
+</p>
 Moreover, note the lines displaying the locations of the 10 vertical ROIs and 5 horizontal ROIs.
 Ensure no errors appear on the command line, as errors may appear without the software crashing when they are raised by supporting threads. Errors may indicate the OPCUA server failing to boot. Do refer to the [Troubleshooting section](#troubleshooting) to resolve common errors.
 
