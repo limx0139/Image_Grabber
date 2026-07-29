@@ -120,6 +120,7 @@ class MainThread:
                     frame = fg.ThermalFrame(self._Device._frame_event)
                     # Save a copy for the ThermalFrame
                     image = np.copy(frame._image)
+                    temperatureMap = np.copy(frame._tempData)
                     
         # ------------------------------------------------------------------------------------------------------ 
                 # Here is where you have access to the thermal frame!
@@ -133,8 +134,6 @@ class MainThread:
                 min_value = np.min(gray)
                 if max_value - min_value < GLOBAL.SENSITIVITY:
                     # No object found
-                    if self._showImages:
-                        cv2.imshow('Frames', image)
                     coords1 = None
                     coords2 = None
                     currentVerticalGeometry = None
@@ -202,20 +201,27 @@ class MainThread:
                     self._serverFrameAvailable.set()
                     self._serverThread.join()
                     break
-                elif key == ord('r'):
-                    recording = True
-                    recorder = videoRecorder.recorder()
                 elif key == ord('t'):
+                    if not recording:
+                        recording = True
+                        recorder = videoRecorder.recorder(framerate, False)
+                elif key == ord('r'):
+                    if not recording:
+                        recording = True
+                        recorder = videoRecorder.recorder(framerate, True)
+                elif key == ord('y'):
                     if recorder is not None:
                         recording = False
                         recorder.stopRecord()
                         recorder = None
                 elif key == ord('s'):
-                    self._csvDump.writeImageManualH(image2)
-                    self._csvDump.writeImageManualV(image)
+                    self._csvWriter.writeImageManualH(image2)
+                    self._csvWriter.writeImageManualV(image)
                 if recording:
-                    print('record')
-                    recorder.record(image)
+                    if recorder._colour:
+                        recorder.record(image)
+                    else:
+                        recorder.record(temperatureMap)
                 
         # ------------------------------------------------------------------------------------------------------ 
                 # Here is where the thermal frame falls out of scope!

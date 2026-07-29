@@ -82,6 +82,15 @@ class csvWriter:
       imageName = r'logs/images/'+ 'savedVFrame' + timestr + '.png' 
       cv2.imwrite(imageName, image)
       
+    def writeImageManualT(self, image):
+      """Saves an image to the logs.
+        Args:
+          image (cv2.UMAT): nparray containing image data to be saved.
+      """
+      timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
+      imageName = r'logs/images/'+ 'savedTFrame' + timestr + '.png' 
+      cv2.imwrite(imageName, image)
+      
         
       
           

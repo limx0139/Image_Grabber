@@ -5,7 +5,7 @@ import cv2
 from datetime import datetime
 from scripts.globalParameters import Unit
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
-FONT_SIZE = 0.4
+FONT_SIZE = 0.3
 WHITE = (255,255,255)
 BLACK = (0, 0, 0)
 RED   = (0, 0, 255)
@@ -27,8 +27,9 @@ def drawOverlay(image, recording):
             'Time: ' + time, 
             'Recording: ' + recordingString,
             's: Save Image', 
-            'r: Start Recording',
-            't: Stop Recording',
+            't: Start Temperature Recording',
+            'r: Stop Recording',
+            'y: Stop Recording',
             'q: Quit']
 
     # Text font face
