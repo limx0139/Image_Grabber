@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from scripts.csvDumper import csvWriter
 from scripts.opcua_server import startServer
-from scripts.draw import drawHorizontalLineandValue, drawHorizontalROI, drawVerticalLineandValue, drawVerticalROI
+from scripts.draw import drawHorizontalLineandValue, drawHorizontalROI, drawOverlay, drawVerticalLineandValue, drawVerticalROI
 from scripts.geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
 import scripts.ametekframegrabber as fg
 from scripts.canny import auto_canny, removeReflection
@@ -123,6 +123,7 @@ class MainThread:
                 if self._showImages:
                     drawVerticalROI(image, self._numVerticalROIs)
                     drawHorizontalROI(image, self._numHorizontalROIs)
+                    drawOverlay(image)
                 
                 # Skip processing if no object is found, ie. difference between min and max value is small
                 max_value = np.max(gray)

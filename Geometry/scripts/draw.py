@@ -2,11 +2,43 @@
 import math
 
 import cv2
-
+from datetime import datetime
 from scripts.globalParameters import Unit
 FONT_FACE = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SIZE = 0.4
 WHITE = (255,255,255)
+BLACK = (0, 0, 0)
+RED   = (0, 0, 255)
+GREEN = (0, 255, 0)
+BLUE  = (255, 0, 0)
+
+def drawOverlay(image):
+    """
+    Superimposes an overlay over the false color image.
+    """
+    time = datetime.now().strftime("%H:%M:%S.%f")
+    # Overlay text
+    text = [
+            'time: {} '.format(round(time, 1)), 
+            'i: MoveIn', 
+            'o: MoveOut',
+            'q: Quit']
+
+    # Text font face
+    thickness = 1
+    line_margin = 10
+
+    # Overlay position
+    x = image.shape[1] - 275
+    y = 25
+
+    # Draw overlay
+    for i, line in enumerate(text):
+        line_height = cv2.getTextSize(line, FONT_FACE, FONT_SIZE, thickness)[0][1]
+        position    = (x, y + i * (line_height + line_margin))
+
+        cv2.putText(image, line, position, FONT_FACE, FONT_SIZE, BLACK, thickness+1, lineType = cv2.LINE_AA)
+        cv2.putText(image, line, position, FONT_FACE, FONT_SIZE, GREEN, thickness, lineType = cv2.LINE_AA)
 
 def drawVerticalROI(image, numVerticalROIs, color = WHITE):
     """

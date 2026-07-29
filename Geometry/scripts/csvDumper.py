@@ -1,6 +1,5 @@
 import csv
 from datetime import datetime
-datetime.now().strftime("%H:%M:%S.%f")
 from pathlib import Path
 import cv2
 class csvWriter:
