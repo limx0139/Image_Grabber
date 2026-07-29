@@ -16,7 +16,7 @@ def drawOverlay(image, recording):
     """
     Superimposes an overlay over the false color image.
     """
-    time = datetime.now().strftime("%H:%M:%S")
+    time = datetime.now().strftime("%H:%M:%S:%f")
     recordingString = ''
     match recording:
         case True: recordingString = 'On'
@@ -28,7 +28,7 @@ def drawOverlay(image, recording):
             'Recording: ' + recordingString,
             's: Save Image', 
             't: Start Temperature Recording',
-            'r: Stop Recording',
+            'r: Start Recording',
             'y: Stop Recording',
             'q: Quit']
 
@@ -37,8 +37,8 @@ def drawOverlay(image, recording):
     line_margin = 10
 
     # Overlay position
-    x = image.shape[1] - 150
-    y = 50
+    x = image.shape[1] - 160
+    y = 40
 
     # Draw overlay
     for i, line in enumerate(text):

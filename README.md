@@ -53,7 +53,7 @@ Versions provided are ones used to write the script. Other versions may also wor
 | pythonnet         | 3.10    |
 | numpy             | 2.4.6   |
 | cv2               | 4.13.0  |
-| matplotlib        | 3.11.0  |
+| asyncua           | 2.0.1   |
 | LandImagerSDK.dll | nil     |
 
 If running on a virtual environment, installation commands should be run within the virtual environment. It is also possible to install all dependencies under the main python path, in which case, the dependencies are just installed, skipping the instructions for setting up virtual environments.
@@ -308,14 +308,84 @@ Below are the relevant parameters for forging:
 | CANNY_SIGMA          | Canny Algorithm Wideness                       |  
 | GAUSSIAN_BLUR_INDEX  | Degree of Blur for Canny Algorithm (Odd Int)   | 
 | REFLECTIVE_INDEX     | Expected reflectivity of background material   |
-| SENSITIVITY          | Higher sensitivity equals ignore cooler objects| 
+| SENSITIVITY          | Temperature difference to detect objects       | 
 
 Passing in settings in the command line, when applicable will cause the default settings to be overridden.
 
 ### Features
-The Geometry Measurer comes with baseline features, those requiring user input during running are 
+The Geometry Measurer comes with baseline features, those requiring user input during running are indicated on the screen overlay:
 
+## NOTE: THE OVERLAY IS CURRENTLY TURNED OFF BUT THE FEATURES ARE ACTIVE
 
+<p align="center">
+<img src="documentation\FeaturesOverlay.png " alt="Features Overlay" width="600"/>
+</p>
+
+These indicate the keyboard inputs the program listens to as it is running.
+Overlay:
+- Current Time
+- Whether video recording is occuring
+- input s to save current frame
+- input t to start recording temperature data
+- input r to start recording video
+- input y to stop recording
+- input q to quit program
+
+#### Screenshots
+The program listens to the input so save the current frame as a screenshot. Each screenshot saves 2 frames, the horizontalROI and verticalROI frames with annotation are saved separately. 
+Manually taken screenshots are saved in the Geometry/logs/images/manual folder.
+
+#### Video Recording
+The program listens to inputs, t, r and y to manage video recording while running.
+Only one video output, temperature data or video data is permitted at one time. In order to switch over to the other output, the current recording has to be terminated. Both recordings use cv2's default AVI format for minimal data loss, so, especially with temperature data, the frame data can be reconstructed at a later date for processing. Recording video data records the the 'Vertical ROIs' frame data, which includes the annotations for the the ROIs and the overlay. As cv2 does not allow variable frame rate, the timestamps on the produced video files may be inaccurate. This should not be an issue if the purpose of recording data is to load it back in to cv2 (temperature data is recommended as it is lossless) for post processing.
+
+Videos are timestamped in the name and saved in the Geometry/logs/videos folder:
+
+<p align="center">
+<img src="documentation\VideoLocation.png " alt="Video Location" width="600"/>
+</p>
+
+### OPCUA Server
+The program also runs an OPCUA server in the background to broadcast ROI data. By default, the server endpoint is '0.0.0.0:5555' or 'localhost:5555' (both indicate localhost), though changing the endpoint accordingly to run on ethernet or internet is possible. The port 5555 is used as the default OPCUA server port 4840 on the AFRC device is busy. 
+The server has no security and communicates anonymously. It can be connected accordingly on UAExpert:
+
+<p align="center">
+<img src="documentation\OPCUAServerDiscovery.png " alt="OPCUA Server" width="600"/>
+</p>
+
+Once connected, the locations on the OPCUA Server are now accessable:
+
+<p align="center">
+<img src="documentation\OPCUAConnectedServer.png " alt="OPCUA Locations" width="600"/>
+</p>
+
+ROI data is updated on the horizontal and vertical GeometryObject nodes, of which the units used is located in unitObject node. 
+
+<p align="center">
+<img src="documentation\ServerUnitLoc.png " alt="Server Unit Location" width="600"/>
+</p>
+
+<p align="center">
+<img src="documentation\ServerROILoc.png " alt="Server ROI Location" width="600"/>
+</p>
+
+Note that in the above example, the unitObject is pixels, which is the default, and the value stored in the node horizontalROI1, corresponding to the upper most horizontalROI, is 0, because the camera is not pointed at anything notable.
+
+### Logging
+
+Datalogging is enabled by default, though this setting can be changed by changing the MAKE_LOGS parameter in the globalParameters.py file, to False.
+
+<p align="center">
+<img src="documentation\TurnOffLogging.png " alt="Turn off Logging" width="600"/>
+</p>
+
+Each time main.py is run, a single csv file is generated containing the horizontal and vertical ROI data for every frame, timestamped to the microsecond. The log file is found in Geometery\logs and is itself automatically timestamped to in its name.
+
+<p align="center">
+<img src="documentation\csvLogLoc.png " alt="Log location and timestamp" width="600"/>
+</p>
+
+Images are also logged every 60 frames
 ### Troubleshooting
 ### Development
 ## Settings Usage

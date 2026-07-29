@@ -130,8 +130,8 @@ class MainThread:
                 image2 = image.copy()
 
                 # Skip processing if no object is found, ie. difference between min and max value is small
-                max_value = np.max(gray)
-                min_value = np.min(gray)
+                max_value = np.max(temperatureMap)
+                min_value = np.min(temperatureMap)
                 if max_value - min_value < GLOBAL.SENSITIVITY:
                     # No object found
                     coords1 = None
@@ -164,7 +164,7 @@ class MainThread:
                 if self._showImages:
                     drawVerticalROI(image, self._numVerticalROIs)
                     drawHorizontalROI(image2, self._numHorizontalROIs)
-                    drawOverlay(image, recording)
+                    # drawOverlay(image, recording)
                     #Draw lengths on the images
                     if coords1 is not None and coords2 is not None:
                         for x in range(len(coords1)):
@@ -196,7 +196,9 @@ class MainThread:
                 # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
-                    
+                    if recording:
+                        recorder.stopRecord()
+                        recorder = None
                     self._stopEvent.set()  # Signal the server thread to stop
                     self._serverFrameAvailable.set()
                     self._serverThread.join()

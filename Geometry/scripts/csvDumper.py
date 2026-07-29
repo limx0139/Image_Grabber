@@ -19,6 +19,7 @@ class csvWriter:
       self._fileName = r'logs/'+ 'geometryLogs_' + timestr + '.csv' 
       Path("logs/").mkdir(parents=True, exist_ok=True)
       Path("logs/images").mkdir(parents=True, exist_ok=True)
+      Path("logs/images/manual").mkdir(parents=True, exist_ok=True)
 
     def writeHeaders(self):
       """Writes headers to the csv file.
@@ -79,7 +80,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/'+ 'savedVFrame' + timestr + '.png' 
+      imageName = r'logs/images/manual/'+ 'savedVFrame' + timestr + '.png' 
       cv2.imwrite(imageName, image)
       
     def writeImageManualT(self, image):
@@ -88,7 +89,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/'+ 'savedTFrame' + timestr + '.png' 
+      imageName = r'logs/images/manual/'+ 'savedTFrame' + timestr + '.png' 
       cv2.imwrite(imageName, image)
       
         
