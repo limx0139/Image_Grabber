@@ -120,17 +120,14 @@ class MainThread:
                 
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 
-                if self._showImages:
-                    drawVerticalROI(image, self._numVerticalROIs)
-                    drawHorizontalROI(image, self._numHorizontalROIs)
-                    drawOverlay(image)
+
                 
                 # Skip processing if no object is found, ie. difference between min and max value is small
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-
-                if max_value - min_value > 100:
-                    # self._verticalGeometryHistory = np.append(self._verticalGeometryHistory, [np.empty((0, len(self._verticalGeometry)))], axis=0)
+                print(max_value, min_value)
+                if max_value - min_value < enums.SENSITIVITY:
+                    # No object found
                     if self._showImages:
                         cv2.imshow('Frames', image)
                     coords1 = None
@@ -160,6 +157,9 @@ class MainThread:
                 self._serverFrameAvailable.set() 
                 
                 if self._showImages:
+                    drawVerticalROI(image, self._numVerticalROIs)
+                    drawHorizontalROI(image, self._numHorizontalROIs)
+                    drawOverlay(image, False)
                     #Draw lengths on the images
                     if coords1 is not None and coords2 is not None:
                         for x in range(len(coords1)):
@@ -176,7 +176,6 @@ class MainThread:
                 # It may be better to create a buffered system to update the csv file every couple of loops, but this likely introduces unnecessary complexity at this stage; read/write operations are not the bottleneck, the opcua server is.   
                 # Might change it to log every second with the image for a middleground
                 if self._csvDump:
-                    print('writing to csv')
                     self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
                     # Save an image 30 frames, approx every second
                     if loops % 30 == 0:

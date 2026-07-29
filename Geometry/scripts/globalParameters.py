@@ -20,6 +20,7 @@ SERVER_ENDPOINT = "opc.tcp://0.0.0.0:5555/freeopcua/server/"
 CANNY_SIGMA = 0.33
 GAUSSIAN_BLUR_INDEX = 5
 REFLECTIVE_INDEX = 0.9
+SENSITIVITY = 100
 #ENUMS
 class Unit(Enum):
     PIXELS = 1

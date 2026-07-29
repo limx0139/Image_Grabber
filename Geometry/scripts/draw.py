@@ -12,16 +12,22 @@ RED   = (0, 0, 255)
 GREEN = (0, 255, 0)
 BLUE  = (255, 0, 0)
 
-def drawOverlay(image):
+def drawOverlay(image, recording):
     """
     Superimposes an overlay over the false color image.
     """
-    time = datetime.now().strftime("%H:%M:%S.%f")
+    time = datetime.now().strftime("%H:%M:%S")
+    recordingString = ''
+    match recording:
+        case True: recordingString = 'On'
+        case False: recordingString = 'Off'
+            
     # Overlay text
     text = [
-            'time: {} '.format(round(time, 1)), 
-            'i: MoveIn', 
-            'o: MoveOut',
+            'Time: ' + time, 
+            'Recording: ' + recordingString,
+            's: Save Image', 
+            'r: Start/Stop Recording',
             'q: Quit']
 
     # Text font face
@@ -29,8 +35,8 @@ def drawOverlay(image):
     line_margin = 10
 
     # Overlay position
-    x = image.shape[1] - 275
-    y = 25
+    x = image.shape[1] - 150
+    y = 50
 
     # Draw overlay
     for i, line in enumerate(text):
@@ -53,11 +59,12 @@ def drawVerticalROI(image, numVerticalROIs, color = WHITE):
     frameHeight, frameWidth = image.shape[:2]
     ROIWidth = frameWidth // numVerticalROIs
     for x in range(ROIWidth, frameWidth, ROIWidth):
-        text = 'ROI'+str(x+1)
-        text_position = (x+ROIWidth//2, 20)
         cv2.line(image, (x, 0), (x, frameHeight), color, thickness)
-        cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
-
+    for i in range(numVerticalROIs):
+        text = 'ROI'+str(i+1)
+        text_position = ((i+1)*ROIWidth+ROIWidth//2- ROIWidth, 20)
+        cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, WHITE, thickness, lineType = cv2.LINE_AA)
+ 
           
 def drawHorizontalROI(image, numHorizontalROIs, color = WHITE):
     """
@@ -72,11 +79,11 @@ def drawHorizontalROI(image, numHorizontalROIs, color = WHITE):
     ROIWidth = frameHeight // numHorizontalROIs
     for x in range(ROIWidth, frameWidth, ROIWidth):
         cv2.line(image, (0, x), (frameWidth, x), color, thickness)
-        text = 'ROI'+str(x+1)
-        text_position = (20, x+ROIWidth//2)
-        cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, color, thickness, lineType=cv2.LINE_AA)
-
-
+    for i in range(numHorizontalROIs):
+        text = 'ROI'+str(i+1)
+        text_position = (20, (i+1)*ROIWidth+ROIWidth//2 - ROIWidth)
+        cv2.putText(image, text, text_position, FONT_FACE, FONT_SIZE, WHITE, thickness, lineType = cv2.LINE_AA)
+ 
 def drawVerticalLineandValue(image, z1, z2, color, value, unit = Unit.PIXELS):
     """
     Draws lines on input image indicating where the vertical length measurement is taken in each ROI
