@@ -17,14 +17,14 @@ from scripts.draw import drawHorizontalLineandValue, drawHorizontalROI, drawOver
 from scripts.geometryMeasurement import convertUnits, measureHorizontalGeometry, measureVerticalGeometry
 import scripts.ametekframegrabber as fg
 from scripts.canny import auto_canny, removeReflection
-import scripts.globalParameters as enums
+import scripts.globalParameters as GLOBAL
 
 
     
 
 class MainThread:
 
-    def __init__(self, ipAddress = "10.1.10.102", serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/", numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = enums.Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
+    def __init__(self, ipAddress = "10.1.10.102", serverEndpoint = "opc.tcp://0.0.0.0:4840/freeopcua/server/", numVerticalROIs = 10, numHorizontalROIs = 10, reflection_index=0.9, cannySigma = 0.33, blurIndex = 5, pixelConversionIndex = 1, unit = GLOBAL.Unit.PIXELS, csvDump = True, plotGraph = False, showImages = 2):
         # Initialises connection with camera
         try:
             
@@ -131,7 +131,7 @@ class MainThread:
                 # Skip processing if no object is found, ie. difference between min and max value is small
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-                if max_value - min_value < enums.SENSITIVITY:
+                if max_value - min_value < GLOBAL.SENSITIVITY:
                     # No object found
                     if self._showImages:
                         cv2.imshow('Frames', image)
@@ -171,11 +171,11 @@ class MainThread:
                         for x in range(len(coords1)):
                             # Draw the vertical line and measurement on the image
                             if coords1[x] is not None:  # Only draw if both y1 and y2 are valid
-                                drawVerticalLineandValue(image, coords1[x][0], coords1[x][1], enums.BLACK, currentVerticalGeometry[x], unit = self._unit)
+                                drawVerticalLineandValue(image, coords1[x][0], coords1[x][1], GLOBAL.BLACK, currentVerticalGeometry[x], unit = self._unit)
                         for y in range(len(coords2)):
                             # Draw the horizontal line and measurement on the image
                             if coords2[y] is not None: 
-                                drawHorizontalLineandValue(image, coords2[y][0], coords2[y][1], enums.BLACK, currentHorizontalGeometry[y], unit = self._unit)
+                                drawHorizontalLineandValue(image, coords2[y][0], coords2[y][1], GLOBAL.BLACK, currentHorizontalGeometry[y], unit = self._unit)
                     cv2.imshow('Frames', image)
                  
                 # If setting to create csv log file is on, write the new line onto the csv file
@@ -240,12 +240,12 @@ def main():
     """
     # Get the IP address from command line argument
     # With an IP address of 0 the first compatible camera will be chosen
-    ip = "10.1.10.102"
-    endpoint = "opc.tcp://0.0.0.0:5555/freeopcua/server/"
-    pixelConversion = 1
-    unitEnum = enums.Unit.PIXELS
-    inputVerticalROI = 10
-    inputHorizontalROI = 5
+    ip = GLOBAL.IP_ADDRESS
+    endpoint = GLOBAL.SERVER_ENDPOINT
+    pixelConversion = GLOBAL.PIXEL_CONVERSION_RATE
+    unitEnum = GLOBAL.Unit.PIXELS
+    inputVerticalROI = GLOBAL.NUM_VERTICAL_ROIS
+    inputHorizontalROI = GLOBAL.NUM_HORIZONTAL_ROIS
 
     if len(sys.argv) == 7:
         ip = sys.argv[1]
@@ -256,15 +256,16 @@ def main():
         units = str(sys.argv[6])
         match units:
             case 'pixels':
-                unitEnum = enums.Unit.PIXELS
+                unitEnum = GLOBAL.Unit.PIXELS
             case 'mm':
-                unitEnum = enums.Unit.MM
+                unitEnum = GLOBAL.Unit.MM
             case 'cm':
-                unitEnum = enums.Unit.CM
+                unitEnum = GLOBAL.Unit.CM
             case '_':
                 raise Exception('InputError: Invalid unit input')
     elif len(sys.argv) != 1:
         raise Exception('InputError: Expected 1 or 7 arguments.')
+
 
     client = None
     

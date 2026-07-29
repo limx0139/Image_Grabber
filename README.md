@@ -231,8 +231,8 @@ This runs the Geometry measurer algorithm on default arguments:
 | --------               | -------                                  | 
 | ipAddress              | 10.1.10.102                              | 
 | opcuaServerEndpoint    | opc.tcp://0.0.0.0:5555/freeopcua/server/ |
-| numberOfVerticalROIs   | 10                                       |
-| numberOfHorizontalROIs | 5                                        |
+| numberOfVerticalROIs   | 20                                       |
+| numberOfHorizontalROIs | 10                                       |
 | pixelConversion        | 1                                        |
 | units                  | Pixels                                   |
 
