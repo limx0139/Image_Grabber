@@ -27,7 +27,8 @@ def drawOverlay(image, recording):
             'Time: ' + time, 
             'Recording: ' + recordingString,
             's: Save Image', 
-            'r: Start/Stop Recording',
+            'r: Start Recording',
+            't: Stop Recording',
             'q: Quit']
 
     # Text font face

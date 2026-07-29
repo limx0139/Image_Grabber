@@ -10,6 +10,7 @@ import time
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
+from scripts import videoRecorder
 from scripts.csvDumper import csvWriter
 from scripts.opcua_server import startServer
 from scripts.draw import drawHorizontalLineandValue, drawHorizontalROI, drawOverlay, drawVerticalLineandValue, drawVerticalROI
@@ -31,7 +32,9 @@ class MainThread:
             self._connectedDevice = fg.connect(ipAddress)
             self._Device = fg.Device(self._connectedDevice)
             # Starts a background thread streaming the camera
-            print(self._Device.getTemperatureRange())
+            print("------------Current Settings------------")
+            print("Temperature Range: "+ str(self._Device.getTemperatureRange()))
+            print("----------------------------------------")
             self._Device.startStreaming()
         except Exception as ex:
             raise ex
@@ -64,8 +67,8 @@ class MainThread:
         # Initialise csvLogger
         self._csvDump = csvDump
         try:
+            self._csvWriter = csvWriter(self._numVerticalROIs, self._numHorizontalROIs)
             if self._csvDump:
-                self._csvWriter = csvWriter(self._numVerticalROIs, self._numHorizontalROIs)
                 self._csvWriter.writeHeaders()
         except Exception as ex:
             print(ex + ", CSV logger failed to initialise.")
@@ -95,12 +98,16 @@ class MainThread:
         
         loops = 0
         startTime = time.time()
+        recording = False
+        recorder = None
+        framerate = 47
         while(True):
             # Get the latest thermal frame if there is one
             if loops != 0 and loops % 1000 == 0:
                 endTime = time.time()
                 elapsedTime = endTime - startTime
-                print(f"Camera processed 1000 frames in {elapsedTime:.2f} seconds. Average FPS: {1000 / elapsedTime+0.0001:.2f}")
+                framerate = 1000 / elapsedTime+0.00001
+                print(f"Camera processed 1000 frames in {elapsedTime:.2f} seconds. Average FPS: {framerate:.2f}")
                 startTime = time.time()
                 
             try:
@@ -121,11 +128,9 @@ class MainThread:
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 
 
-                
                 # Skip processing if no object is found, ie. difference between min and max value is small
                 max_value = np.max(gray)
                 min_value = np.min(gray)
-                print(max_value, min_value)
                 if max_value - min_value < enums.SENSITIVITY:
                     # No object found
                     if self._showImages:
@@ -140,8 +145,9 @@ class MainThread:
                     currentVerticalGeometry = self._numVerticalROIs * [0] 
                     currentHorizontalGeometry = self._numHorizontalROIs * [0]    
                 
-                # Process the image    
+                  
                 else:
+                    # Process the image 
                     removed_reflection = removeReflection(gray, self._reflection_index)
                     edged = auto_canny(removed_reflection, sigma = self._cannySigma, blurIndex = self._blurIndex)
                     with self._geometryLock:
@@ -159,7 +165,7 @@ class MainThread:
                 if self._showImages:
                     drawVerticalROI(image, self._numVerticalROIs)
                     drawHorizontalROI(image, self._numHorizontalROIs)
-                    drawOverlay(image, False)
+                    drawOverlay(image, recording)
                     #Draw lengths on the images
                     if coords1 is not None and coords2 is not None:
                         for x in range(len(coords1)):
@@ -194,6 +200,19 @@ class MainThread:
                     self._serverFrameAvailable.set()
                     self._serverThread.join()
                     break
+                elif key == ord('r'):
+                    recording = True
+                    recorder = videoRecorder.recorder()
+                elif key == ord('t'):
+                    if recorder is not None:
+                        recording = False
+                        recorder.stopRecord()
+                        recorder = None
+                elif key == ord('s'):
+                    self._csvDump.writeImageManual(image)
+                if recording:
+                    print('record')
+                    recorder.record(image)
                 
         # ------------------------------------------------------------------------------------------------------ 
                 # Here is where the thermal frame falls out of scope!

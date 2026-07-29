@@ -56,6 +56,15 @@ class csvWriter:
       imageName = r'logs/images/'+ 'frame' + timestr + '.png' 
       cv2.imwrite(imageName, image)
       
+    def writeImageManual(self, image):
+      """Saves an image to the logs.
+        Args:
+          image (cv2.UMAT): nparray containing image data to be saved.
+      """
+      timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
+      imageName = r'logs/images/'+ 'savedFrame' + timestr + '.png' 
+      cv2.imwrite(imageName, image)
+      
         
       
           
@@ -63,15 +72,3 @@ class csvWriter:
         
     
     
-# with open("demofile.txt", "a") as f:
-#   f.write("Now the file has more content!")
-
-# #open and read the file after the appending:
-# with open("demofile.txt") as f:
-#   print(f.read())
-timestr = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
-print('geometryLogs_' + timestr + '.csv')
-print(timestr)
-fun = csvWriter(5, 5)
-fun.writeHeaders()
-fun.writeLine([1,2,3,4,5,6,7,8,9,10])
