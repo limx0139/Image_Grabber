@@ -184,7 +184,7 @@ class MainThread:
                 if self._csvDump:
                     self._csvWriter.writeLine(currentVerticalGeometry + currentHorizontalGeometry)
                     # Save an image 30 frames, approx every second
-                    if loops % 60 == 0:
+                    if loops % 120 == 0:
                         self._csvWriter.writeImageV(image)
                         self._csvWriter.writeImageH(image2)
                 

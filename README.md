@@ -371,6 +371,12 @@ ROI data is updated on the horizontal and vertical GeometryObject nodes, of whic
 
 Note that in the above example, the unitObject is pixels, which is the default, and the value stored in the node horizontalROI1, corresponding to the upper most horizontalROI, is 0, because the camera is not pointed at anything notable.
 
+Connecting the OPCUA server results in a notable framerate drop, which is to be expected.
+
+<p align="center">
+<img src="documentation\PerformanceImpactofServerConnection.png " alt="Server FPS Drop" width="600"/>
+</p>
+
 ### Logging
 
 Datalogging is enabled by default, though this setting can be changed by changing the MAKE_LOGS parameter in the globalParameters.py file, to False.
@@ -385,7 +391,7 @@ Each time main.py is run, a single csv file is generated containing the horizont
 <img src="documentation\csvLogLoc.png " alt="Log location and timestamp" width="600"/>
 </p>
 
-Images are also logged every 60 frames
+Images are also logged every 60 frames, which at around 35-50 frames per second is about a frame every 1-2 seconds. 2 images are processed at each time, 
 ### Troubleshooting
 ### Development
 ## Settings Usage

@@ -54,7 +54,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/'+ 'Verticalframe' + timestr + '.png' 
+      imageName = r'logs/images/' + timestr + 'Vframe.png' 
       cv2.imwrite(imageName, image)
       
     def writeImageH(self, image):
@@ -63,7 +63,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/'+ 'Hframe' + timestr + '.png' 
+      imageName = r'logs/images/' + timestr + 'Hframe.png' 
       cv2.imwrite(imageName, image)
       
     def writeImageManualH(self, image):
@@ -72,7 +72,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/'+ 'savedHFrame' + timestr + '.png' 
+      imageName = r'logs/images/'+ timestr + 'HsavedFrame.png' 
       cv2.imwrite(imageName, image)
     def writeImageManualV(self, image):
       """Saves an image to the logs.
@@ -80,7 +80,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/manual/'+ 'savedVFrame' + timestr + '.png' 
+      imageName = r'logs/images/manual/' + timestr + 'VsavedFrame.png' 
       cv2.imwrite(imageName, image)
       
     def writeImageManualT(self, image):
@@ -89,7 +89,7 @@ class csvWriter:
           image (cv2.UMAT): nparray containing image data to be saved.
       """
       timestr = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      imageName = r'logs/images/manual/'+ 'savedTFrame' + timestr + '.png' 
+      imageName = r'logs/images/manual/' + timestr + 'TsavedFrame.png' 
       cv2.imwrite(imageName, image)
       
         
