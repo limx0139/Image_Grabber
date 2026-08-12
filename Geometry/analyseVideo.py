@@ -47,7 +47,15 @@ class MainThread:
         if not cap.isOpened():
             print("Error: Could not open video file.")
             exit()
+        frame_width = int(cap.get(3))     # Width of frame
 
+        frame_height = int(cap.get(4))    # Height of frame
+
+        fps = cap.get(cv2.CAP_PROP_FPS)   # Frames per second
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec
+
+        out = cv2.VideoWriter('output.avi', fourcc, fps, (frame_width, frame_height))
+        
         # Read and process video frames
         while True:
             noObject = False
@@ -55,7 +63,7 @@ class MainThread:
 
             if not ret:
                 break   # No more frames -> exit loop
-
+             
             # Apply Canny edge detection to the thermal image
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             max_value = np.max(gray)
@@ -84,11 +92,14 @@ class MainThread:
             else:   
                 drawVerticalROI(image, self._numVerticalROIs)
                 cv2.imshow('Frames', image)
-
+            out.write(image) 
             # Press Q to quit
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                break
+        cap.release()
+        out.release()
+        cv2.destroyAllWindows()
 
 def main():
     """
