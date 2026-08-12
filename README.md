@@ -46,7 +46,7 @@ To remove a virtual environment, simply delete the virtual environment directory
 
 ### Installation
 
-Versions provided are ones used to write the script. Other versions may also work. LandImagerSDK.dll assembly SDK provided by Ametek.
+Versions provided are ones used to write the script. Other versions may also work if they are updated. 
 | Dependency        | Version | 
 | --------          | ------- | 
 | Python            | v3.14.6 | 
@@ -58,7 +58,7 @@ Versions provided are ones used to write the script. Other versions may also wor
 
 If running on a virtual environment, installation commands should be run within the virtual environment. It is also possible to install all dependencies under the main python path, in which case, the dependencies are just installed, skipping the instructions for setting up virtual environments.
 ```bash
-python -m pip install pythonnet numpy cv2 matplotlib
+python -m pip install pythonnet numpy cv2 
 ```
 The LandImagerSDK.dll can be found on the [Official Ametek website](https://www.ametek-land.com/products/software/imagersdk), though it is also included in this repository. As per the specifications on the official LandImagerSDK documentation, this file needs to be in the base directory for any program with it as a dependency. e.g. Settings has the LandImagerSDK.dll within its directory. 
 
@@ -67,8 +67,8 @@ Depending on the security configurations of the machine running the program, the
 
 
 
-## Base Image Grabber Usage
-The image grabber can be accessed through the amatekframegrabber.py API, which is itself a (albeit incomplete at the moment) python port of the LandImagerSDK.dll. 
+## Base Image Grabber Documentation
+The image grabber can be accessed through the amatekframegrabber.py API, which is fundamentally a python port of the LandImagerSDK.dll. 
 Ensure all dependencies are installed and the 'LandImagerSDK.dll' file is in the working directory.
 While there are a variety of different ways to import the package to your python project, by far, the most straightforward way to do so is to have the sourcecode 'ametekframegrabber.py' and the assembly SDK 'LandImagerSDL.dll' in your working directory. This will allow the script to be accessible to the python intepreter, allowing direct access to the script by calling the following import:
 ```python
@@ -219,10 +219,12 @@ An example, in example1, is provided showing how to use to API to connect a came
 ### Notes on threading
 This script uses a background thread to receive thermal frames from the camera API. This is necessary as the camera API itself uses a background thread to run the camera, hence, the script integrates said background thread to receive the necessary information. As such, errors will be prone to occur if the threads are not properly synced. In the example code provided, an instance of proper thread syncing is shown.
 
+
 ## Geometry Measurer Usage
-The scripts in the Geometry folder build a program used to measure the lengths at various Regions of Interest of a hot object assumed to be roughly parallel to the plane of the camera, broadcasting this information as a OPCUA server and logging the information in a csv dump file located in \Geometry\logs.
+The scripts in the Geometry folder build a program used to measure the lengths at various Regions of Interes(ROIs) of a hot object assumed to be roughly parallel to the plane of the camera, broadcasting this information as a OPCUA server and logging the information in a csv dump file located in \Geometry\logs. Video Recording and screengrabbing features are also implemented.
+
 ### Quick Start
-The script is rigged to run out of the box with the main.py function, which handles the main working thread of the program. Ensure all dependencies are installed, navigate to the Geometry directory and run main.py:
+The script runs out of the box with the main.py function, which handles the main working thread of the program. Ensure all dependencies are installed, navigate to the Geometry directory and run main.py:
 ```bash
 python main.py
 ```
@@ -250,9 +252,9 @@ Also, note the terminal log:
 <img src="documentation\NormalTerminal.png " alt="Default Terminal" width="1000"/>
 </p>
 
-Under normal conditions, the only continuous logs on the terminal should be the server and camera frames per second. If any angry looking error messages pop up, it is likely something has gone wrong in the background, in which case, Do refer to the [Troubleshooting section](#troubleshooting) section. Even if the camera boots up without issue, errors may indicate problems with helper threads, e.g. the OPCUA server may have crashed.
+Under normal conditions, the only continuous logs on the terminal should be the server and camera frames per second. If any angry looking error messages pop up, it is likely something has gone wrong in the background, in which case, refer to the [Troubleshooting section](#troubleshooting) section. Even if the camera boots up without issue, errors logged may indicate problems with helper threads, e.g. the OPCUA server may have crashed.
 
-Further note that in the above example, the camera pointed at nothing, so the it is only displaying the ambient temperature. To view the expected output during forging, run the analyseVideo.py file in the same directory. 
+Further note that in the above example, the camera is unfocused and directed at empty space, so the it is only displaying the ambient temperature. To view the expected output during forging, run the analyseVideo.py file in the same directory. 
 ```python
 python analyseVideo.py
 ```
@@ -310,7 +312,9 @@ Below are the relevant parameters for forging:
 | REFLECTIVE_INDEX     | Expected reflectivity of background material   |
 | SENSITIVITY          | Temperature difference to detect objects       | 
 
-Passing in settings in the command line, when applicable will cause the default settings to be overridden.
+
+
+Command line settings take precedence and will override the settings in \Geometry\scripts\globalParameters.
 
 ### Features
 The Geometry Measurer comes with baseline features, those requiring user input during running are indicated on the screen overlay:
@@ -324,7 +328,7 @@ The Geometry Measurer comes with baseline features, those requiring user input d
 These indicate the keyboard inputs the program listens to as it is running.
 Overlay:
 - Current Time
-- Whether video recording is occuring
+- Whether video recording is on
 - input s to save current frame
 - input t to start recording temperature data
 - input r to start recording video
@@ -337,7 +341,7 @@ Manually taken screenshots are saved in the Geometry/logs/images/manual folder.
 
 #### Video Recording
 The program listens to inputs, t, r and y to manage video recording while running.
-Only one video output, temperature data or video data is permitted at one time. In order to switch over to the other output, the current recording has to be terminated. Both recordings use cv2's default AVI format for minimal data loss, so, especially with temperature data, the frame data can be reconstructed at a later date for processing. Recording video data records the the 'Vertical ROIs' frame data, which includes the annotations for the the ROIs and the overlay. As cv2 does not allow variable frame rate, the timestamps on the produced video files may be inaccurate. This should not be an issue if the purpose of recording data is to load it back in to cv2 (temperature data is recommended as it is lossless) for post processing.
+Only one video output, temperature data or video data is permitted at one time. In order to switch over to the other output, the current recording has to be terminated. Both recordings use cv2's default AVI format for minimal data loss, so, especially with temperature data, the frame data can be reconstructed at a later date for processing. Recording video data records the the 'Vertical ROIs' frame data, which includes the annotations for the the ROIs and the overlay. As cv2 does not allow variable frame rate, the framerates on the produced video files may be inaccurate. This should not be an issue if the purpose of recording data is to load it back in to cv2 (temperature data is recommended as it is lossless) for post processing.
 
 Videos are timestamped in the name and saved in the Geometry/logs/videos folder:
 
@@ -371,7 +375,7 @@ ROI data is updated on the horizontal and vertical GeometryObject nodes, of whic
 
 Note that in the above example, the unitObject is pixels, which is the default, and the value stored in the node horizontalROI1, corresponding to the upper most horizontalROI, is 0, because the camera is not pointed at anything notable.
 
-Connecting the OPCUA server results in a notable framerate drop, which is to be expected.
+Connecting the OPCUA server sometimes results in a noticable drop in framerate.
 
 <p align="center">
 <img src="documentation\PerformanceImpactofServerConnection.png " alt="Server FPS Drop" width="600"/>
@@ -391,8 +395,16 @@ Each time main.py is run, a single csv file is generated containing the horizont
 <img src="documentation\csvLogLoc.png " alt="Log location and timestamp" width="600"/>
 </p>
 
-Images are also logged every 60 frames, which at around 35-50 frames per second is about a frame every 1-2 seconds. 2 images are processed at each time, 
+Images are also automatically logged every 60 frames, which at around 35-50 frames per second is about a frame every 1-2 seconds. 2 images are processed at each time, and they are saved in Geometery\logs\images.
+
+
+<p align="center">
+<img src="documentation\Images_Log.png " alt="Image path location" width="600"/>
+</p>
+
 ### Troubleshooting
+
+#### LandSDK.dll Blocked 
 ### Development
 ## Settings Usage
 The scripts in the Settings folder allow for changing the base settings of the Ametek camera connected.
