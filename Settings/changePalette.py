@@ -20,8 +20,10 @@ def changePalette(IPAddress, palette):
 
 if __name__ == "__main__":
     palette = Palette.Palette1
-    if len(sys.argv) >= 2:
-       palette = int(sys.argv[1])
+    ipAddress = '10.1.10.102'
+    if len(sys.argv) >= 3:
+        ipAddress = sys.argv[1]
+        palette = int(sys.argv[2])
     match palette:
         case 1:
             palette = Palette.Palette1
@@ -35,4 +37,4 @@ if __name__ == "__main__":
             palette = Palette.Palette5
         case _:
             raise Exception('InputError: no palette corresponding to input found.')
-    changePalette("10.1.10.102", palette)
+    changePalette(ipAddress, palette)

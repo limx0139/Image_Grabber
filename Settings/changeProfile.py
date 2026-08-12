@@ -33,9 +33,11 @@ def main():
     print("Profile Name Options:")
     for profileName in profileNames:
         print(profileName)
-        
-    client.changeProfile(profile-1)
     
+    if profile < 1 or profile > len(profileNames):
+        raise Exception("InputError: Profile number out of range. Please select a profile between 1 and " + str(len(profileNames)))
+    client.changeProfile(profile-1)
+    print("Profile changed to: " + profileNames[profile-1])
     client = ConnectionHandler(ip)
     stream(client._Device)
 

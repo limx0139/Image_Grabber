@@ -164,7 +164,8 @@ class MainThread:
                 if self._showImages:
                     drawVerticalROI(image, self._numVerticalROIs)
                     drawHorizontalROI(image2, self._numHorizontalROIs)
-                    # drawOverlay(image, recording)
+                    if GLOBAL.SHOW_OVERLAY:
+                        drawOverlay(image, recording)
                     #Draw lengths on the images
                     if coords1 is not None and coords2 is not None:
                         for x in range(len(coords1)):

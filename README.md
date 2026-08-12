@@ -11,8 +11,11 @@ This program is written for Windows and while the python scripts may work for ot
 
 # Contents
  - [Dependencies](#dependencies) 
- - [Base Image Grabber Usage](#base-image-grabber-usage) 
- - [Base Image Grabber Usage](#base-image-grabber-usage) 
+ - [Base Image Grabber Documentation](#base-image-grabber-usage) 
+ - [Geometry Measurer Usage](#geometry-measurer-usage)
+ - [Troubleshooting](#troubleshooting)
+ - [Settings Usage](#settings-usage)
+
 
 ## Dependencies
 
@@ -61,9 +64,6 @@ If running on a virtual environment, installation commands should be run within 
 python -m pip install pythonnet numpy cv2 
 ```
 The LandImagerSDK.dll can be found on the [Official Ametek website](https://www.ametek-land.com/products/software/imagersdk), though it is also included in this repository. As per the specifications on the official LandImagerSDK documentation, this file needs to be in the base directory for any program with it as a dependency. e.g. Settings has the LandImagerSDK.dll within its directory. 
-
-Depending on the security configurations of the machine running the program, the LandImagerSDK.dll may be flagged as potentially malicious as a unknown assembly dll script. To work around this, ensure that the 'LandImagerSDK.dll' is legitimate, then navigate to it in folders, right click it and select properties. ....
-# TODO, make troubleshooting page
 
 
 
@@ -319,7 +319,6 @@ Command line settings take precedence and will override the settings in \Geometr
 ### Features
 The Geometry Measurer comes with baseline features, those requiring user input during running are indicated on the screen overlay:
 
-## NOTE: THE OVERLAY IS CURRENTLY TURNED OFF BUT THE FEATURES ARE ACTIVE
 
 <p align="center">
 <img src="documentation\FeaturesOverlay.png " alt="Features Overlay" width="600"/>
@@ -334,6 +333,8 @@ Overlay:
 - input r to start recording video
 - input y to stop recording
 - input q to quit program
+
+The visual overlay can also be turned off by toggling the SHOW_OVERLAY option in Geometry\scripts\globalParameters.py
 
 #### Screenshots
 The program listens to the input so save the current frame as a screenshot. Each screenshot saves 2 frames, the horizontalROI and verticalROI frames with annotation are saved separately. 
@@ -402,12 +403,140 @@ Images are also automatically logged every 60 frames, which at around 35-50 fram
 <img src="documentation\Images_Log.png " alt="Image path location" width="600"/>
 </p>
 
-### Troubleshooting
+## Troubleshooting
 
-#### LandSDK.dll Blocked 
-### Development
+### System.NotSupportedException: LandImagerSDK.dll Blocked 
+
+An error may occur when the any software using ametekframegrabber.py is run on first installation:
+
+```bash
+System.NotSupportedException: An attempt was made to load an assembly from a network location which would have caused the assembly to be sandboxed in previous versions of the .NET Framework. This release of the .NET Framework does not enable CAS policy by default, so this load may be dangerous. If this load is not intended to sandbox the assembly, please enable the loadFromRemoteSources switch. See http://go.microsoft.com/fwlink/?LinkId=155569 for more information.
+
+```
+
+This error occurs when attempting to load a dll file windows does not trust. In this case, the LandImagerSDK.dll is blocked by windows. To fix this error, first ensure that LandImagerSDK.dll is legitimate, by downloading it from the official Ametek website. Then, manually unblock the LandImagerSDK.dll file referenced:
+
+- Find the LandImagerSDK.dll file referenced
+<p align="center">
+<img src="documentation\AllowLandImagerSDK_1.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+- Select properties
+
+<p align="center">
+<img src="documentation\AllowLandImagerSDK_2.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+- Check the option to unblock the dll file.
+
+<p align="center">
+<img src="documentation\AllowLandImagerSDK_3.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+- Apply changes.
+
+<p align="center">
+<img src="documentation\AllowLandImagerSDK_4.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+### PermissionError: : Port Busy causes OPCUA server to crash
+
+Assigning a port that is busy for the OPCUA server causes it to crash, while the rest of the program functions relatively unaffected. This error can be seen in the command line log as such:
+```bash
+------------Current Settings------------
+#Settings log
+...
+----------------------------------------
+#Error log
+...
+...
+...
+PermissionError: [Errno 13] error while attempting to bind on address ('0.0.0.0', 4840): [winerror 10013] an attempt was made to access a socket in a way forbidden by its access permissions
+
+# Main thread logs
+...
+```
+
+This is caused by the OPCUA attempting to access a port that is busy. In this case, the default port for OPCUA servers, 4840, is busy, likely running another OPCUA server. To fix this, change the port for the OPCUA server to one that is available. The default port assigned in globalParameters is 5555.
+
+<p align="center">
+<img src="documentation\OPCUA_Default_Port.png " alt="OPCUA Default Port" width="600"/>
+</p>
+
+As the OPCUA server runs on a separate thread, this error will occur undetected by the main thread.
+
 ## Settings Usage
-The scripts in the Settings folder allow for changing the base settings of the Ametek camera connected.
+The scripts in the Settings folder allow for changing the base settings of the Ametek camera connected. Ensure the working directory is ...\Settings\ to run these scripts.
+
+```bash
+(venv) C:\Users\Administrator\Documents\geometryMeasurementSourceCode\Image_Grabber-main\Geometry>cd path\to\Settings
+
+(venv) C:\Users\Administrator\Documents\geometryMeasurementSourceCode\Image_Grabber-main\Settings>
+```
+
+
+
+
+### Change Palette
+
+changePalette.py changes the colour palette of the camera. The script takes the camera IP address and a numerical input to determine the palette to be changed to:
+
+| Input    | Palette                                    | 
+| -------- | -------                                    | 
+| 1        | Grayscale color palette                    |
+| 2        | Blue to yellow palette. Default palette.   |  
+| 3        | Purple to yellow palette                   | 
+| 4        | Red to yellow palette.                     | 
+| 5        | High contrast palette.                     | 
+
+
+The following command changes the colour palette to grayscale:
+```bash
+python changePalette.py 10.1.10.102 1
+```
+<p align="center">
+<img src="documentation\ChangeProfile_Gray.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+### Change Palette
+
+changeProfile.py changes the Profile of the camera, which contains the camera's temperature range mode. Different cameras have different profiles so running changeProfile also lists the available options for the camera. This script also accepts as arguments, the IP address of the camera and the profile to be changed to encoded as a number.
+
+The following command changes the profile of the camera at IP Address 10.1.10.102 to the first option:
+
+```bash
+python changeProfile.py 10.1.10.102 1
+```
+<p align="center">
+<img src="documentation\Change_Profile.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+Note that the command logs the options for the camera's profile and the numerical encoding for each of them. The above command changes the temperature range to 100-1000 degrees C, and for example, to change the temperature range to -20-120, the following command should be run:
+
+```bash
+python changeProfile.py 10.1.10.102 11
+```
+### Focusing
+
+tuneFocus.py allows the camera's focus to be tuned. Run tuneFocus with the IP Address of the camera to be tuned as an argument:
+
+```bash
+python tuneFocus.py 10.1.10.102
+```
+<p align="center">
+<img src="documentation\Tune_Focus.png " alt="Find LandImagerSDK" width="600"/>
+</p>
+
+This opens a window displaying the camera output and an overlay detailing the key presses the program is listening to:
+- 'i': Move focus in
+- 'o': Move focus out
+- 'q': Quit Program
+
+## Development
+
+The sourcecode in this repository may be used freely to support development of applications using the LandImagerSDK.dll.
+
+
 ## Contributing
 
 
