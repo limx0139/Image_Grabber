@@ -67,7 +67,7 @@ The LandImagerSDK.dll can be found on the [Official Ametek website](https://www.
 
 
 
-## Base Image Grabber Documentation
+## Image Grabber Documentation
 The image grabber can be accessed through the amatekframegrabber.py API, which is fundamentally a python port of the LandImagerSDK.dll. 
 Ensure all dependencies are installed and the 'LandImagerSDK.dll' file is in the working directory.
 While there are a variety of different ways to import the package to your python project, by far, the most straightforward way to do so is to have the sourcecode 'ametekframegrabber.py' and the assembly SDK 'LandImagerSDL.dll' in your working directory. This will allow the script to be accessible to the python intepreter, allowing direct access to the script by calling the following import:
@@ -99,7 +99,7 @@ class Palette(Enum):
     # High Contrast Palette
     Palette5 = 5
 
-# A port for the proprietory response codes used by the LandImagerSDK. Most functions sending instructions and receiving information to a camera receive a response function containing a value and a response code indicating the result of the function. This enum ports the response code enum class to python.
+# A port for the proprietory response codes used by the LandImagerSDK. Most functions sending instructions and receiving information to a camera receive a response object containing a value and a response code indicating the result of the function. This enum ports the response code enum class to python. This functionality is ported over to python by allowing functions to throw exceptions indicating the type of response code, if not success. 
 class ResponseCode(Enum):
     Disconnected = 1
     Error = 2
@@ -111,6 +111,7 @@ class FocusAdjustment(Enum):
     MoveIn = 1
     MoveOut = 2
     SettoValue = 3
+
 ```
 ### Device Class
 A device class object is used to connect to the camera. This is functionally a boiled down version of DeviceAPI in the SDK documentation, with functions for connection, streaming, and capturing thermal data ported over to Python.
@@ -156,9 +157,45 @@ A device class object is used to connect to the camera. This is functionally a b
     # Ensure this function is called once camera is no longer needed to avoid memory leakage.
     disconnect()
 
+    # Returns the current active profile of the camera
+    getActiveProfile()
+
+    # Returns the number of profiles the camera supports
+    getProfileCount()
+
+    # Changes the current profile of the camera to the one pointed at the index argument
+    # This disconnects the camera as the camera reboots, and destroys the Device object.
+    # So it is necessary to reconnect the camera and reinstate a Device object afterwards.
+    setActiveProfile()
+
+    # Returns a list of camera profiles associated with the Device connected.
+    getProfileCount()
+
+    # Returns the temperature range of the current profile of the current temperature as an array.
+    getTemperatureRange()
+
+    # Adjusts the focus of the camera.
+    # lfg.FocusAdjustment: Enum lfg.FocusAdjustment
+        # FocusAdjustment.MoveIn - Moves focus in
+        # FocusAdjustment.MoveOut - Moves focus out
+        # FocusAdjustment.SetToValue - Sets focus to the values specified in position
+    # position: int
+    # N.B. Some cameras, including the LWIR-640, do not support the SetToValue option and will fail silently.
+    adjustFocus(lfg.FocusAdjustment, position)
+
+    # Returns the current focus position of the camera.
+    # N.B. Some cameras, including the LWIR-640, do not support this operation, and will return a Success-0 Response
+    getFocusPosition()
+
+    # Use autofocusing native to the camera to focus the object at the input distance.
+    # distance: distance to object in metres
+    #N.B. This operation is not supported by the LWIR-640, which will return a Not Supported Execption
+    setAutoTargetFocus(distance)
+
+
 ```
 ### Thermal Frame Class
-A Thermal Frame class object is used to store pertinent thermal frame information. This ports the thermal frame class in the C# SDK over to Python. Construct this class to convert the C# ThermalFrame class to a equivalent Python class. This is done on the main thread for optimisation purposes.
+A Thermal Frame class object is used to store pertinent thermal frame information. This ports the thermal frame class in the C# SDK over to Python. Construct this class to convert the C# ThermalFrame class to a equivalent Python class.
 
 This class contains all the information extracted from each frame of the camera, and exposes it to be processed using python.
 
@@ -194,6 +231,11 @@ This class contains all the information extracted from each frame of the camera,
     copiedFrame = frame.clone()
 
 ```
+
+### Response Class
+
+The response class ports the proprietory response class implemented in the SDK. This contains a value an a Reponse Code Enum. This class should not be interacted with normally as responses are automatically converted to python exceptions when the response codes are not success.
+
 
 
 ### Example Functions

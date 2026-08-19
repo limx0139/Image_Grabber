@@ -72,9 +72,7 @@ def streamWithFocusAdjust(Device):
             minIntensity = np.min(gray_image)
             maxIntensity = np.max(gray_image) 
             m = (255/(maxIntensity-minIntensity))
-            # gray_image = np.uint8(m*gray_image - m*minIntensity)
             image = np.uint8(m*image - m*minIntensity)
-            # bgr_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)    
             drawOverlay(image, Device.getFocusPosition())
             cv2.imshow('Frames', image) 
             # Check for keyboard inputs indicating that the user wants to quit by pressing the q key
@@ -82,9 +80,9 @@ def streamWithFocusAdjust(Device):
             if key == ord('q'):
                 break
             elif key == ord('i'):
-                Device.adjustFocus(fg.FocusAdjustment.MoveIn, 5)
+                Device.adjustFocus(fg.FocusAdjustment.MoveIn, 0)
             elif key == ord('o'):
-                Device.adjustFocus(fg.FocusAdjustment.MoveOut, 5)
+                Device.adjustFocus(fg.FocusAdjustment.MoveOut, 0)
             elif key == ord('s'):
                 Device.adjustFocus(fg.FocusAdjustment.SettoValue, 100)#
             # elif key == ord('a'):
